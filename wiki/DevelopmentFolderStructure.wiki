@@ -1,3 +1,5 @@
+#summary File structure of the code
+
 =Folder Structure=
 
 The GP Toolkit file/folder structure is as follows:
