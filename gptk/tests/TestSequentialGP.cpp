@@ -4,7 +4,7 @@ TestSequentialGP::TestSequentialGP()
 {
 	header = "Test for class SequentialGP";
 	
-	addTest(&testNoisySine, "SSGP prediction with full training set as active points \n(should give same prediction as standard GP");
+	addTest(&testNoisySine, "SSGP prediction with full training set as active points \n(should give same prediction as standard GP)");
 }
 
 TestSequentialGP::~TestSequentialGP()
@@ -18,7 +18,7 @@ bool TestSequentialGP::testNoisySine()
 	mat Xtrnmat;
 	vec gpmean, gpvar, ssgpmean, ssgpvar;
 	
-	
+
 	//---------------------------------------------------------------
 	// Load data
 	//---------------------------------------------------------------
