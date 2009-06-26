@@ -1,0 +1,83 @@
+#summary Installation instructions for Ubuntu Linux 8.10
+
+=Installing astonGeostats=
+
+==Downloading the source code==
+Checkout the latest version of the source code from the repository (see "Source" tab for instructions). This will create the `aston-geostats` folder containing the source code for `libgptk` and the installer for the required Xerces-c library.
+ 
+==Installing dependencies==
+
+Prior to compiling `libgptk`, we need to install several dependencies required by `libgptk`. These include IT++, GSL and Gnuplot. The instructions below should work on Ubuntu systems.
+
+===IT++===
+In Ubuntu 8.10, IT++ can be installed directly from the repository, using the following command (in a terminal):
+{{{
+$ sudo apt-get install libitpp6gf libitpp-dev libitpp6-dbg
+}}}
+
+===GNU scientific library===
+Also available from the repository:
+{{{
+$ sudo apt-get install libgsl0ldbl libgsl0-dbg libgsl0-dev
+}}}
+
+===Installing GNUplot===
+GNU plot should be installed for the plotting features to be available. This can be done from the repository:
+{{{
+$ sudo apt-get install gnuplot
+}}}
+
+
+===Xerces XML parser===
+`libptk` requires the Xerces XML C library version 3.0.1. The Ubuntu repository only provides version 2.8.0, so we'll need to download and install the library.
+
+This can be done by running the `install-required-libraries.sh` script:
+{{{
+chmod +x install-required-libraries.sh
+./install-required-libraries.sh
+}}}
+This will install Xerces C in the `lib` folder.
+
+Alternatively, you can install the library manually. 
+
+   # Navigate to the `lib` directory
+{{{
+$ cd lib
+}}}
+   # Download the library binaries for Linux from the Xerces website:
+{{{
+$ wget http://mirror.fubra.com/ftp.apache.org/xerces/c/3/binaries/xerces-c-3.0.1-x86-linux-gcc-3.4.tar.gz
+}}}
+   # Extract the library and create a symbolic link to it.
+{{{
+$ tar -xzvf xerces-c-3.0.1-x86-linux-gcc-3.4.tar.gz
+$ ln -s xerces-c-3.0.1-x86-linux-gcc-3.4 xercesc
+}}}
+
+==Compiling libgptk==
+To compile `libgptk`, simply run:
+{{{
+$ make
+}}}
+in the `aston-geostats` folder. This will build the library, the examples and the tests.
+
+==Running the demos==
+To run the demos in the `examples` directory, use the following command:
+{{{
+$ cd examples
+$ ./rundemo demGP1
+}}}
+
+where `demGP1` is the name of the demo. The `rundemo` script merely sets the library path before launching the demo. Alternatively, you can simply run the following command (from the `intamap` directory) and run the demos directly:
+
+{{{
+$ export LD_LIBRARY_PATH=../libgptk:../lib/xercesc/lib:$LD_LIBRARY_PATH
+$ ./demGP1
+}}}
+
+==Running the tests==
+Similarly, running the test is done by using the `runtest` script in the `tests folder:
+{{{
+$ cd tests
+$ ./runtest testCSVStream
+}}}
