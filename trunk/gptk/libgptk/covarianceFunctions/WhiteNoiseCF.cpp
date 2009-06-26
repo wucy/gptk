@@ -21,11 +21,9 @@ WhiteNoiseCF::~WhiteNoiseCF()
  */
 inline double WhiteNoiseCF::computeElement(const vec& A, const vec& B) const
 {
-	// ** RB: start edit **
 	if (A==B) 
 		return variance;
 	else
-	// ** RB: end edit **
 		return 0.0;
 }
 
