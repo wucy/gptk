@@ -57,7 +57,17 @@ public:
 	void computePosterior(const ivec& LikelihoodModel, const Vec<LikelihoodType *> noiseModels);
 	void resetPosterior();
 	void recomputePosterior();
+	
+	/**
+	 * Make predictions at a set of locations Xpred. The mean and variance
+	 * are returned in the Mean and Variance vectors. To use a different  
+	 * covariance function to the training one (useful to do non noisy predictions),
+	 * you can pass an optional CovarianceFunction object.
+	 */  
+	void makePredictions(vec& Mean, vec& Variance, const mat& Xpred, CovarianceFunction &cf) const;
 	void makePredictions(vec& Mean, vec& Variance, const mat& Xpred) const;
+	
+	
 	vec simulate(const mat& Xpred, bool approx) const;
 
 	void setLikelihoodType(LikelihoodCalculation lc);
@@ -73,7 +83,8 @@ public:
 	 * Accessors
 	 */
 	ivec getActiveSetIndices() { return idxActiveSet; }
-	mat getActiveSetLocations() { return ActiveSet; }
+	mat  getActiveSetLocations() { return ActiveSet; }
+	
 
 private:
 
