@@ -12,6 +12,9 @@
 #include "covarianceFunctions/GaussianCF.h"
 #include "covarianceFunctions/WhiteNoiseCF.h"
 
+#include "optimisation/SCGModelTrainer.h"
+#include "optimisation/CGModelTrainer.h"
+
 #include "likelihoodModels/GaussianLikelihood.h"
 
 #include "gaussianProcesses/SequentialGP.h"
@@ -26,7 +29,14 @@ public:
 	TestSequentialGP();
 	virtual ~TestSequentialGP();
 	
-	static bool testNoisySine();
+	static bool testNoisySineFixedParams();
+	static bool testNoisySineLearnParams();
+	static bool testCheckGradient();
+	
+private:
+	static void loadNoisySineData(vec &Xtrn, vec &Ytrn, vec &Xtst, vec &Ytst, vec &gpmean, vec &gpvar);
+	static void plotResults(vec ssgpmean, vec ssgpvar, vec gpmean, vec gpvar, 
+                            vec Xtrn, vec Ytrn, vec Xtst, vec Ytst, SequentialGP ssgp);
 };
 
 #endif /*TESTSEQUENTIALGP_H_*/
