@@ -30,8 +30,8 @@ SequentialGP::SequentialGP(int Inputs, int Outputs, int nActivePoints, mat& Xdat
 	epsilonTolerance = 1e-6;
 
 	momentProjection = true;
-	iterChanging = 1;
-	iterFixed = 0;
+	iterChanging = 4;
+	iterFixed = 1;
 
 //	likelihoodType = FullEvid;
 	likelihoodType = UpperBound;
@@ -217,12 +217,12 @@ inline void SequentialGP::addOne(int index, const LikelihoodType& noiseModel, co
 	// FULL OR SPARSE MODEL UPDATE
 	if((gamma < epsilonTolerance) | fixActiveSet)
 	{	
-        cout << "Update sparse" << endl;
+//        cout << "Update sparse" << endl;
 		updateSparse(KX, eHat, gamma, qtp1, rtp1, mu, sigx, logEvidence, index);
 	}
 	else
 	{
-		cout << "Update full" << endl;
+//		cout << "Update full" << endl;
 		updateFull(KX, eHat, gamma, qtp1, rtp1, sig0, mu, sigx, logEvidence, index);
 
 //cout << "Extra" << endl;
@@ -232,7 +232,7 @@ inline void SequentialGP::addOne(int index, const LikelihoodType& noiseModel, co
 			while(sizeActiveSet > maxActiveSet)
 			{
 				int removalCandidate = findLeastInformativeActivePoint(FullKL);
-				cout << "Deleting active point " << removalCandidate << endl;
+				// cout << "Deleting active point " << removalCandidate << endl;
 				deleteActivePoint(removalCandidate);
 			}			
 		}
@@ -572,18 +572,28 @@ void SequentialGP::stabiliseCoefficients(double& q, double& r, double cavityMean
 // MAKE PREDICTIONS
 //
 ////////////////////////////////////////////////////////////////////////////////
-void SequentialGP::makePredictions(vec& Mean, vec& Variance, const mat& Xpred) const
+void SequentialGP::makePredictions(vec& Mean, vec& Variance, const mat& Xpred, 
+		                           CovarianceFunction& covFunc2) const
 {
 	assert(Mean.length() == Variance.length());
 	assert(Xpred.rows() == Mean.length());
 	
 	mat Cpred(Xpred.rows(), ActiveSet.rows());
-	covFunc.computeCovariance(Cpred, Xpred, ActiveSet);
-	cout << Cpred << endl;
+	covFunc2.computeCovariance(Cpred, Xpred, ActiveSet);
+
 	Mean = Cpred * Alpha;
 	vec sigsq(Xpred.rows());
 	covFunc.computeDiagonal(sigsq, Xpred);
 	Variance = sigsq + sum(elem_mult((Cpred * C), Cpred), 2);
+}
+
+/**
+ * Same as above, but using the current (stored) covariance function to make
+ * the predictions.
+ **/
+void SequentialGP::makePredictions(vec& Mean, vec& Variance, const mat& Xpred) const
+{
+	makePredictions(Mean, Variance, Xpred, covFunc);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -810,7 +820,7 @@ double SequentialGP::compEvidenceUpperBound() const
 	covFunc.computeSymmetric(KB_new, ActiveSet);
 	double like1 = 2.0 * (sum(log(diag(computeCholesky(KB_new)))));
 	double like2 = trace((eye(sizeActiveSet) + 
-			(KB * (C + outer_product(Alpha, Alpha)))) * backslash(KB_new, KB));
+	       (KB * (C + outer_product(Alpha, Alpha)))) * backslash(KB_new, KB));
 	return ((like1 + like2) / 2.0);
 }
 
@@ -872,14 +882,32 @@ vec SequentialGP::gradientEvidenceUpperBound() const
 	covFunc.computeSymmetric(KB_new, ActiveSet);
 
 	// prob with lengthscale calculation somewhere here
-	W = backslash(KB_new, W - (W + (KB * (C + outer_product(Alpha, Alpha)))) * backslash(KB_new, KB));
+	// W = backslash(KB_new, W - (W + (KB * (C + outer_product(Alpha, Alpha)))) * backslash(KB_new, KB));
+	
+	// This gives the correct gradient for the length scale
+	// W = (W-(W + (KB * (C + outer_product(Alpha, Alpha)))) * backslash(KB_new, KB)) * backslash(KB_new,W);
+	// W = backslash(KB_new,W);
+	// W = - backslash(KB_new, KB) * backslash(KB_new,W);
+	// W = -( eye(sizeActiveSet) + (KB * (C + outer_product(Alpha, AlphDeriva)))) * backslash(KB_new, KB) * backslash(KB_new,W);
 
 	mat partialDeriv(sizeActiveSet, sizeActiveSet);
 
+	W = W-( eye(sizeActiveSet) + (KB * (C + outer_product(Alpha, Alpha))));
+	
+	mat cKB_new = computeCholesky(KB_new);
+	mat cKB     = computeCholesky(KB);
+	
+	// mat cU = backslash(cKB_new.transpose(),cKB.transpose());
+	// mat U  = backslash(cKB_new, cU*cKB);
+	mat U = backslash(KB_new,KB);
+	
 	for(int i = 0; i < covFunc.getNumberParameters(); i++)
 	{
 		covFunc.getParameterPartialDerivative(partialDeriv, i, ActiveSet);
-		grads(i) = elem_mult_sum(W, partialDeriv) / 2.0;
+		mat V = backslash(KB_new,partialDeriv*U).transpose();
+		 
+		grads(i) = elem_mult_sum(W, V) / 2.0;
+		// grads(i) = trace(W*V)/2.0;
 	}
 
 	return grads;
