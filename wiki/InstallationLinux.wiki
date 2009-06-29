@@ -1,9 +1,9 @@
 #summary Installation instructions for Ubuntu Linux 8.10
 
-=Installing astonGeostats=
+=Installing `libgptk`=
 
 ==Downloading the source code==
-Checkout the latest version of the source code from the repository (see "Source" tab for instructions). This will create the `aston-geostats` folder containing the source code for `libgptk` and the installer for the required Xerces-c library.
+Checkout the latest version of the source code from the repository (see "Source" tab for instructions). This will create the `gptk` folder containing the source code for `libgptk` and the installer for the required Xerces-c library.
  
 ==Installing dependencies==
 
@@ -61,7 +61,7 @@ To compile `libgptk`, simply run:
 {{{
 $ make
 }}}
-in the `aston-geostats` folder. This will build the library, the examples and the tests.
+in the `gptk` folder. This will build the library, the examples and the tests.
 
 ==Running the demos==
 To run the demos in the `examples` directory, use the following command:
