@@ -29,12 +29,12 @@ $ sudo apt-get install gnuplot
 
 
 ===Xerces XML parser===
-`libptk` requires the Xerces XML C library version 3.0.1. The Ubuntu repository only provides version 2.8.0, so we'll need to download and install the library.
+`libptk` requires the Xerces XML Parser C++ library version 3.0.1. The Ubuntu repository only provides version 2.8.0, so we'll need to download and install the library.
 
-This can be done by running the `install-required-libraries.sh` script:
+For 32-bit linux systems, this can be done by running the `install-required-libraries.sh` script:
 {{{
-chmod +x install-required-libraries.sh
-./install-required-libraries.sh
+$ chmod +x install-required-libraries.sh
+$ ./install-required-libraries.sh
 }}}
 This will install Xerces C in the `lib` folder.
 
@@ -42,7 +42,7 @@ Alternatively, you can install the library manually.
 
    # Navigate to the `lib` directory
 {{{
-$ cd lib
+$ cd gptk/lib
 }}}
    # Download the library binaries for Linux from the Xerces website:
 {{{
@@ -53,6 +53,8 @@ $ wget http://mirror.fubra.com/ftp.apache.org/xerces/c/3/binaries/xerces-c-3.0.1
 $ tar -xzvf xerces-c-3.0.1-x86-linux-gcc-3.4.tar.gz
 $ ln -s xerces-c-3.0.1-x86-linux-gcc-3.4 xercesc
 }}}
+
+On 64-bit systems, an alternative binary can be download from the [http://xerces.apache.org/xerces-c/download.cgi Xerces website]. Save the appropriate file in the `gptk/lib` folder and resume at step 3 (replacing "`xerces-c-3.0.1-x86-linux-gcc-3.4`" with the name of the downloaded binary).
 
 ==Compiling libgptk==
 To compile `libgptk`, simply run:
