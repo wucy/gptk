@@ -70,8 +70,16 @@ ModelTrainer::~ModelTrainer()
 double ModelTrainer::errorFunction(vec params)
 {
 	functionEvaluations++;
+	vec xOld = getParameters();
+	
+	// Compute error
 	setParameters(params);
-	return(model.objective());
+	double err = model.objective();
+	
+	// Don't forget to reset parameters to their initial state
+	setParameters(xOld);
+	
+	return err;
 }
 
 vec ModelTrainer::errorGradients(vec params)
@@ -79,8 +87,15 @@ vec ModelTrainer::errorGradients(vec params)
 	if(analyticGradients)
 	{
 		gradientEvaluations++;
+		vec xOld = getParameters();
+		
+		// Computer error gradient
 		setParameters(params);
-		return(model.gradient());
+		vec grad = model.gradient();
+		
+		// Don't forget to reset parameters to their initial state
+		setParameters(xOld);
+		return grad;
 	}
 	else
 	{
@@ -90,7 +105,6 @@ vec ModelTrainer::errorGradients(vec params)
 
 vec ModelTrainer::numericalGradients(const vec params)
 {
-	setParameters(params);
 	vec g;
 	int numParams = params.size();
 
@@ -109,16 +123,12 @@ double ModelTrainer::calculateNumericalGradient(const int parameterNumber, const
 	
 	xNew = params;
 	xNew(parameterNumber) = xNew(parameterNumber) + epsilon;
-	cout << "Param + eps: " << xNew(parameterNumber) + epsilon << endl;
 		
 	fplus = errorFunction(xNew);
-	cout << "Err: " << fplus << endl;
 		
 	xNew = params;
 	xNew(parameterNumber) = xNew(parameterNumber) - epsilon;
-	cout << "Param - eps: " << xNew(parameterNumber) + epsilon << endl;
 	fminus = errorFunction(xNew);
-	cout << "Err: " << fminus << endl << endl;
 	
 	return (0.5 * ((fplus - fminus) / epsilon));
 }
@@ -178,6 +188,7 @@ void ModelTrainer::checkGradient()
 
 	cout << "==========================" << endl;
 	cout << "GRADCHECK" << endl;
+	cout << "X = " << xOld << endl << endl;
 	cout << "     Delta, Analytic, Diff" << endl;
 	cout << "--------------------------" << endl;
 	
