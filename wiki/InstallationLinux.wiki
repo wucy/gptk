@@ -15,13 +15,13 @@ In Ubuntu 8.10, IT++ can be installed directly from the repository, using the fo
 $ sudo apt-get install libitpp6gf libitpp-dev libitpp6-dbg
 }}}
 
-===GNU scientific library===
+===GNU scientific library (GSL)===
 Also available from the repository:
 {{{
 $ sudo apt-get install libgsl0ldbl libgsl0-dbg libgsl0-dev
 }}}
 
-===Installing GNUplot===
+===GNUplot===
 GNU plot should be installed for the plotting features to be available. This can be done from the repository:
 {{{
 $ sudo apt-get install gnuplot
