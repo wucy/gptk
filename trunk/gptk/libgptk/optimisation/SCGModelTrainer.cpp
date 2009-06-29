@@ -85,6 +85,8 @@ void SCGModelTrainer::Train(int numIterations){
 	// Main loop
 	for (int j = 1; j <= numIterations; j++ )
 	{
+		checkGradient();
+		
 		if (success)
 		{
 			mu = dot(direction, gradNew);
@@ -147,7 +149,11 @@ void SCGModelTrainer::Train(int numIterations){
 			if ((max(alpha * direction) < parameterTolerance) && (abs( fNew - fOld )) < errorTolerance )
 			{
 				functionValue = fNew;
-				setParameters(x);				
+				setParameters(x);		
+				
+				// Check last gradient (to make sure everything went fine
+				if (gradientCheck) checkGradient();
+					
 				return;
 			}
 			else
@@ -158,7 +164,13 @@ void SCGModelTrainer::Train(int numIterations){
 				
 				if(dot(gradNew, gradNew) == 0)
 				{
-					functionValue = fNew;				   	
+					// RB: Shouldn't we set the parameters as below?
+					setParameters(x);
+					functionValue = fNew;
+					
+					// Check last gradient (to make sure everything went fine
+					if (gradientCheck) checkGradient();
+					
 					return;
 				}
 			}
@@ -187,6 +199,9 @@ void SCGModelTrainer::Train(int numIterations){
 				direction = (gamma * direction) - gradNew;
 			}
 		}
+		
+		cout << "Gradient: " << gradNew << endl;
+		
 	}
 		
 	if(display)
@@ -196,6 +211,10 @@ void SCGModelTrainer::Train(int numIterations){
 
 	functionValue = fOld;
 	setParameters(x);
+	
+	// Check last gradient (to make sure everything went fine
+	if (gradientCheck) checkGradient();
+	
 	return;
 }
 

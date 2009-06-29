@@ -65,9 +65,11 @@ public:
 	void setFiniteDifferenceDelta(double d) {epsilon = d;};
 
 	void setOptimisationMask(bvec& m) {optimisationMask = m; maskSet = true;};
-
-protected:
+	
 	void checkGradient();
+	
+protected:
+	
 	vec numericalGradients(const vec params);
 	double calculateNumericalGradient(const int parameterNumber, const vec params);
 
