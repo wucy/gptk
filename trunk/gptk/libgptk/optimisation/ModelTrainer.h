@@ -35,6 +35,7 @@
 #include <itpp/itbase.h>
 
 #include "Optimisable.h"
+#include "gaussianProcesses/SequentialGP.h"
 
 
 const double PHI = ((1.0 + sqrt(5.0)) / 2.0);

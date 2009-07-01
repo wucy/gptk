@@ -84,23 +84,41 @@ double ModelTrainer::errorFunction(vec params)
 
 vec ModelTrainer::errorGradients(vec params)
 {
+    vec xOld = getParameters();
+    vec p = xOld;
+    vec grad;
+    
+    // Use default parameters for those not in optimisation mask
+    if (maskSet) {
+        for (int i=0; i<p.length(); i++) {
+            if (optimisationMask(i)) p(i) = params(i);
+        }
+    }
+    
 	if(analyticGradients)
 	{
 		gradientEvaluations++;
-		vec xOld = getParameters();
 		
 		// Computer error gradient
-		setParameters(params);
-		vec grad = model.gradient();
+		setParameters(p);
+		grad = model.gradient();
 		
 		// Don't forget to reset parameters to their initial state
 		setParameters(xOld);
-		return grad;
 	}
 	else
 	{
-		return(numericalGradients(params));
+		grad = numericalGradients(params);
 	}
+	
+	// Gradient is zero for parameters not in optimisation mask
+	if (maskSet) {
+	    for (int i=0; i<p.length(); i++) {
+	        if (optimisationMask(i) == false) grad(i) = 0.0;
+	    }
+	}
+	
+	return grad;
 }
 
 vec ModelTrainer::numericalGradients(const vec params)
@@ -137,15 +155,10 @@ void ModelTrainer::setParameters(const vec p)
 {
 	if(maskSet)
 	{
-		int pos = 0;
 		vec maskedParameters = model.getParametersVector();
 		for(int i = 0 ; i < optimisationMask.size() ; i++)
 		{
-			if(optimisationMask(i) == true)
-			{
-				maskedParameters(i) = p(pos);
-				pos++;
-			}
+			if(optimisationMask(i)) maskedParameters(i) = p(i);
 		}
 		model.setParametersVector(maskedParameters);
 	}
@@ -157,7 +170,11 @@ void ModelTrainer::setParameters(const vec p)
 
 vec ModelTrainer::getParameters()
 {
-	if(maskSet)
+    // It is probably safer to return all parameters and simply set 
+    // the gradient of the non-masked ones to zero, rather than extracting
+    // subsets of the parameters.
+    /*
+    if(maskSet)
 	{
 		vec p = model.getParametersVector();
 		vec maskedParameters;
@@ -175,6 +192,8 @@ vec ModelTrainer::getParameters()
 	{
 		return model.getParametersVector();
 	}
+	*/
+    return model.getParametersVector();
 }
 
 void ModelTrainer::checkGradient()
@@ -198,10 +217,9 @@ void ModelTrainer::checkGradient()
 		cout << "#" << i << " ";
 		if(maskSet)
 		{
-			if(optimisationMask(i) == true)
+			if(optimisationMask(i))
 			{
-				delta = calculateNumericalGradient(pos, xOld);
-				pos = pos + 1;
+				delta = calculateNumericalGradient(i, xOld);
 				cout << " ";
 			}
 			else

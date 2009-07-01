@@ -85,12 +85,11 @@ void SCGModelTrainer::Train(int numIterations){
 	// Main loop
 	for (int j = 1; j <= numIterations; j++ )
 	{
-		checkGradient();
-		
+	    
 		if (success)
 		{
 			mu = dot(direction, gradNew);
-			if ( mu >= 0 )
+			if ( mu >= 0.0 )
 			{
 				direction = -gradNew;
 				mu = dot(direction, gradNew);
@@ -108,27 +107,37 @@ void SCGModelTrainer::Train(int numIterations){
 			sigma = sigma0 / sqrt(kappa);
 			xPlus = x + (sigma * direction);
 			gPlus = errorGradients(xPlus);
+			//cout << "  xPlus = " << xPlus << endl;
+			//cout << "  gPlus = " << gPlus << endl;
 			theta = dot(direction, gPlus - gradNew) / sigma;	
 		}
 		
 		delta = theta + (beta * kappa);			
-		if ( delta <= 0 )
+		if ( delta <= 0.0 )
 		{	
-			delta = beta * kappa;
+		    delta = beta * kappa;
 			beta = beta - ( theta / kappa );
+//		    double olddelta = delta;
+//		    double oldbeta = beta;
+//		    beta = 2.0*(oldbeta - olddelta/kappa);
+//		    delta = oldbeta*kappa - olddelta;
 		}
 		alpha = - ( mu / delta );
-			
+		//cout << "  alpha = " << alpha << endl;
+		//cout << "  d = " << direction << endl;
 		xNew = x + (alpha * direction);
+		cout << "  xNew = " << xNew << endl; 
 
 		fNew = errorFunction(xNew);
+		cout << "  fNew = " << fNew << endl;
 
-		Delta = 2 * ( fNew - fOld ) / (alpha * mu);
-		if ( Delta >= 0 )
+		Delta = 2.0 * ( fNew - fOld ) / (alpha * mu);
+		if ( Delta >= 0.0 )
 		{
 			success = true;
 			numSuccess++;
 			x = xNew;
+			// RB: DO NOT SET PARAMETERS HERE!!
 			fNow = fNew;
 		}
 		else
@@ -149,11 +158,7 @@ void SCGModelTrainer::Train(int numIterations){
 			if ((max(alpha * direction) < parameterTolerance) && (abs( fNew - fOld )) < errorTolerance )
 			{
 				functionValue = fNew;
-				setParameters(x);		
-				
-				// Check last gradient (to make sure everything went fine
-				if (gradientCheck) checkGradient();
-					
+				setParameters(x); 
 				return;
 			}
 			else
@@ -162,15 +167,10 @@ void SCGModelTrainer::Train(int numIterations){
 				gradOld = gradNew;
 				gradNew = errorGradients(x);
 				
-				if(dot(gradNew, gradNew) == 0)
+				if(dot(gradNew, gradNew) < 1e-16)
 				{
-					// RB: Shouldn't we set the parameters as below?
-					setParameters(x);
 					functionValue = fNew;
-					
-					// Check last gradient (to make sure everything went fine
-					if (gradientCheck) checkGradient();
-					
+					setParameters(x);
 					return;
 				}
 			}
@@ -195,12 +195,17 @@ void SCGModelTrainer::Train(int numIterations){
 		{
 			if (success)
 			{
+			    //cout << "  gradOld = " << gradOld << endl;
+			    //cout << "  gradNew = " << gradNew << endl;
+			    //cout << "  mu = " << mu << endl;
+			                    
 				double gamma = dot(gradOld - gradNew, (gradNew / mu));
+				//cout << "  gamma = " << gamma << endl; 
 				direction = (gamma * direction) - gradNew;
 			}
 		}
 		
-		cout << "Gradient: " << gradNew << endl;
+		//cout << "  gradNew = " << gradNew << endl;
 		
 	}
 		
