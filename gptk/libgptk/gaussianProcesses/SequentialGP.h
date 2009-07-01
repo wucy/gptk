@@ -85,7 +85,12 @@ public:
 	ivec getActiveSetIndices() { return idxActiveSet; }
 	mat  getActiveSetLocations() { return ActiveSet; }
 	
-
+	// This is used by ModelTrainer to update the model after
+	// parameters have been changed.
+	void updateModel();
+	
+	void setSelectiveSweep(bool b);
+	
 private:
 
 	inline void addOne(int index, const LikelihoodType& noiseModel, const bool fixActiveSet);
@@ -133,6 +138,10 @@ private:
 	bool momentProjection;
 	int iterChanging;
 	int iterFixed;
+	
+	// If this is set to true, the locations already in the active set
+	// will not be added+deleted again.
+	bool selectiveSweep;
 
 	LikelihoodCalculation likelihoodType;
 };

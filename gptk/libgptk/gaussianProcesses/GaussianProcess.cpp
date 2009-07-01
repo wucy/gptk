@@ -23,25 +23,27 @@ GaussianProcess::~GaussianProcess()
 
 void GaussianProcess::makePredictions(vec& Mean, vec& Variance, const mat& Xpred) const
 {
+	makePredictions(Mean, Variance, Xpred, covFunc);	
+}
+
+void GaussianProcess::makePredictions(vec& Mean, vec& Variance, const mat& Xpred, CovarianceFunction &cf) const
+{
 	assert(Mean.size() == Variance.size());
 	assert(Xpred.rows() == Mean.size());
 
 	mat Sigma(Observations.size(), Observations.size());
 	mat Cpred(Locations.rows(), Xpred.rows());
 
-	covFunc.computeCovariance(Cpred, Locations, Xpred);
-	covFunc.computeSymmetric(Sigma, Locations);
+	cf.computeCovariance(Cpred, Locations, Xpred);                   // k = k(X,x*)
+	covFunc.computeSymmetric(Sigma, Locations);                      // K = K(X,X)
 
-	vec alpha = ls_solve(Sigma, Observations);
-	Mean = Cpred.transpose() * alpha;
+	vec alpha = ls_solve(Sigma, Observations);                       // a = K^{-1} * y
+	Mean = Cpred.transpose() * alpha;                                // mu* = k' * K^{-1} * y
 
 	vec variancePred(Xpred.rows());
-	covFunc.computeDiagonal(variancePred, Xpred);
-	mat v = ls_solve(computeCholesky(Sigma), Cpred);
-//	cout << sum(elem_mult(v, v)) << endl;
-	Variance = variancePred - sum(elem_mult(v, v));
-	
-
+	covFunc.computeDiagonal(variancePred, Xpred);                    // k* = K(x*,x*)
+	mat v = ls_solve(computeCholesky(Sigma).transpose(), Cpred);     // v = K^{-1} * k
+	Variance = variancePred - sum(elem_mult(v, v));                  // diag( k* - k'*K^{-1}*k )
 }
 
 void GaussianProcess::makePredictions(vec& Mean, vec& Variance, const mat& Xpred, const mat& C) const
