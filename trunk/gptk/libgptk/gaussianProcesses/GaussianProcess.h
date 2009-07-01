@@ -44,6 +44,8 @@ public:
 	virtual ~GaussianProcess();
 
 	void makePredictions(vec& Mean, vec& Variance, const mat& Xpred, const mat& C) const;
+	
+	void makePredictions(vec& Mean, vec& Variance, const mat& Xpred, CovarianceFunction &cf) const;
 	void makePredictions(vec& Mean, vec& Variance, const mat& Xpred) const;
 	double loglikelihood() const;
 

@@ -36,6 +36,10 @@ SequentialGP::SequentialGP(int Inputs, int Outputs, int nActivePoints, mat& Xdat
 //	likelihoodType = FullEvid;
 	likelihoodType = UpperBound;
 //	likelihoodType = Approximate;
+	
+	// If this is set to true, the locations already in the active set
+	// will not be added+deleted again.
+	selectiveSweep = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -47,6 +51,9 @@ SequentialGP::~SequentialGP()
 {
 
 }
+
+// Toggle the "selective sweep" option
+void SequentialGP::setSelectiveSweep(bool b) { selectiveSweep = b; }
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -70,11 +77,28 @@ void SequentialGP::computePosterior(const LikelihoodType& noiseModel)
 		// do a randperm
 		vec rndNums = randu(Locations.rows());
 		ivec rndIdx = sort_index(rndNums);
-	
+
+		// Only add locations which are not already in the active set
+		bvec activeIndex(Observations.length());
+		if (selectiveSweep) {
+    		for (int i=0; i<activeIndex.length(); i++)
+    		    activeIndex(i) = true;
+    		for (int i=0; i<idxActiveSet.length(); i++) 
+    		    activeIndex(idxActiveSet(i)) = false;
+		}
+		
+		
 		// send the observations individually
 		for(int i=0; i<Observations.length(); i++)	
 		{
-			addOne(rndIdx(i), noiseModel, fixActiveSet);
+		    // If selectiveSweep is set to true, only add location if it is not already 
+		    // in the active set. Otherwise, always add observation (even if already in
+		    // active set).
+		    if (selectiveSweep) {   
+		        if (activeIndex(rndIdx(i))) addOne(rndIdx(i), noiseModel, fixActiveSet);
+		    }
+		    else 
+		        addOne(rndIdx(i), noiseModel, fixActiveSet);
 		}
 
 	}
@@ -573,17 +597,17 @@ void SequentialGP::stabiliseCoefficients(double& q, double& r, double cavityMean
 //
 ////////////////////////////////////////////////////////////////////////////////
 void SequentialGP::makePredictions(vec& Mean, vec& Variance, const mat& Xpred, 
-		                           CovarianceFunction& covFunc2) const
+		                           CovarianceFunction& cf) const
 {
 	assert(Mean.length() == Variance.length());
 	assert(Xpred.rows() == Mean.length());
 	
 	mat Cpred(Xpred.rows(), ActiveSet.rows());
-	covFunc2.computeCovariance(Cpred, Xpred, ActiveSet);
+	cf.computeCovariance(Cpred, Xpred, ActiveSet);
 
 	Mean = Cpred * Alpha;
 	vec sigsq(Xpred.rows());
-	covFunc.computeDiagonal(sigsq, Xpred);
+	cf.computeDiagonal(sigsq, Xpred);
 	Variance = sigsq + sum(elem_mult((Cpred * C), Cpred), 2);
 }
 
@@ -664,9 +688,6 @@ void SequentialGP::setParametersVector(const vec p)
 void SequentialGP::recomputePosterior()
 {
 	mat KBold = KB;
-	covFunc.computeSymmetric(KB, ActiveSet);
-
-
 	mat Kplus(Observations.length(), sizeActiveSet);
 
 	covFunc.computeSymmetric(KB, ActiveSet);
@@ -679,7 +700,10 @@ void SequentialGP::recomputePosterior()
 	Alpha = backslash(CC, projLam * alphaP);
 	C = -backslash(CC, UU);
 	Q = computeInverseFromCholesky(KB);
+}
 
+void SequentialGP::updateModel() {
+    recomputePosterior();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -821,7 +845,7 @@ double SequentialGP::compEvidenceUpperBound() const
 	double like1 = 2.0 * (sum(log(diag(computeCholesky(KB_new)))));
 	double like2 = trace((eye(sizeActiveSet) + 
 	       (KB * (C + outer_product(Alpha, Alpha)))) * backslash(KB_new, KB));
-	return ((like1 + like2) / 2.0);
+	return like1 + like2;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -885,29 +909,18 @@ vec SequentialGP::gradientEvidenceUpperBound() const
 	// W = backslash(KB_new, W - (W + (KB * (C + outer_product(Alpha, Alpha)))) * backslash(KB_new, KB));
 	
 	// This gives the correct gradient for the length scale
-	// W = (W-(W + (KB * (C + outer_product(Alpha, Alpha)))) * backslash(KB_new, KB)) * backslash(KB_new,W);
-	// W = backslash(KB_new,W);
-	// W = - backslash(KB_new, KB) * backslash(KB_new,W);
-	// W = -( eye(sizeActiveSet) + (KB * (C + outer_product(Alpha, AlphDeriva)))) * backslash(KB_new, KB) * backslash(KB_new,W);
-
 	mat partialDeriv(sizeActiveSet, sizeActiveSet);
-
-	W = W-( eye(sizeActiveSet) + (KB * (C + outer_product(Alpha, Alpha))));
-	
-	mat cKB_new = computeCholesky(KB_new);
-	mat cKB     = computeCholesky(KB);
-	
-	// mat cU = backslash(cKB_new.transpose(),cKB.transpose());
-	// mat U  = backslash(cKB_new, cU*cKB);
 	mat U = backslash(KB_new,KB);
+	
+	W =  W + (KB * (C + outer_product(Alpha, Alpha)));
 	
 	for(int i = 0; i < covFunc.getNumberParameters(); i++)
 	{
 		covFunc.getParameterPartialDerivative(partialDeriv, i, ActiveSet);
-		mat V = backslash(KB_new,partialDeriv*U).transpose();
+		mat V1 = backslash(KB_new,partialDeriv);
+		mat V2 = W*backslash(KB_new,partialDeriv*U);
 		 
-		grads(i) = elem_mult_sum(W, V) / 2.0;
-		// grads(i) = trace(W*V)/2.0;
+		grads(i) = trace(V1-V2);
 	}
 
 	return grads;
@@ -986,6 +999,7 @@ mat SequentialGP::computeCholesky(const mat& iM) const
 		cout << "Matrix not positive definite.  After " << l << " attempts, " << noiseFactor << " added to the diagonal" << endl;
 	}
 	return cholFactor;
+
 }
 
 mat SequentialGP::computeInverseFromCholesky(const mat& C) const
