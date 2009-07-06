@@ -106,6 +106,26 @@ void SequentialGP::computePosterior(const LikelihoodType& noiseModel)
 }
 
 
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// COMPUTE POSTERIOR WITH SINGLE LIKELIHOOD MODEL
+//
+////////////////////////////////////////////////////////////////////////////////
+void SequentialGP::computePosteriorFixedActiveSet(const LikelihoodType& noiseModel, ivec iActive)
+{
+	assert(Locations.rows() == Observations.length());
+
+	bool fixActiveSet = false;
+
+	// Add specified observations
+	for(int i=0; i<iActive.length(); i++)	
+	{
+	    addOne(iActive(i), noiseModel, fixActiveSet);
+	}
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 //
 // COMPUTE POSTERIOR WITH MULTIPLE LIKELIHOODS
@@ -137,6 +157,7 @@ void SequentialGP::computePosterior(const ivec& LikelihoodModel, const Vec<Likel
 		}
 	}
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //
