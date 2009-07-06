@@ -14,6 +14,7 @@
 
 #include "optimisation/SCGModelTrainer.h"
 #include "optimisation/CGModelTrainer.h"
+#include "optimisation/QuasiNewtonModelTrainer.h"
 
 #include "likelihoodModels/GaussianLikelihood.h"
 
@@ -37,6 +38,9 @@ private:
 	static void loadNoisySineData(vec &Xtrn, vec &Ytrn, vec &Xtst, vec &Ytst, vec &gpmean, vec &gpvar);
 	static void plotResults(vec ssgpmean, vec ssgpvar, vec gpmean, vec gpvar, 
                             vec Xtrn, vec Ytrn, vec Xtst, vec Ytst, SequentialGP ssgp);
+	
+	static ivec  maxDistance(mat x, int n);
+	static int  maxTotalDistance(mat x, vec xstar);
 };
 
 #endif /*TESTSEQUENTIALGP_H_*/
