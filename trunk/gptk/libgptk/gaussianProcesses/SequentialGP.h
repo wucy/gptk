@@ -91,6 +91,8 @@ public:
 	
 	void setSelectiveSweep(bool b);
 	
+	void computePosteriorFixedActiveSet(const LikelihoodType& noiseModel, ivec iActive);
+	
 private:
 
 	inline void addOne(int index, const LikelihoodType& noiseModel, const bool fixActiveSet);

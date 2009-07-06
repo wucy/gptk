@@ -73,6 +73,7 @@ void CGModelTrainer::Train(int numIterations){
 		if (gg == 0.0)
 		{
 			functionValue = fnew;
+			setParameters(x);
 			return;
 		}
 
@@ -93,6 +94,8 @@ void CGModelTrainer::Train(int numIterations){
  		if((max(abs(x - xold)) < parameterTolerance) && (abs(fnew - fold) < errorTolerance))
 		{
 			functionValue = fnew;
+			// RB
+			setParameters(x);
 			return;
 		}
 
@@ -116,6 +119,7 @@ void CGModelTrainer::Train(int numIterations){
 		cout << "Warning: Maximum number of iterations has been exceeded" << endl;		
 	}
 	functionValue = fold;
+	setParameters(x);
 }
 
 

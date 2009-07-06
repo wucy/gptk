@@ -96,6 +96,7 @@ void QuasiNewtonModelTrainer::Train(int numIterations){
  		if((max(abs(x - xold)) < parameterTolerance) & (abs(fnew - fold) < errorTolerance))
 		{
 			functionValue = fnew;
+			setParameters(x);
 			return;
 		}
 		gradnew = errorGradients(x);
@@ -126,6 +127,7 @@ void QuasiNewtonModelTrainer::Train(int numIterations){
 		cout << "Warning: Maximum number of iterations has been exceeded" << endl;		
 	}
 	functionValue = fold;
+	setParameters(x);
 }
 
 
