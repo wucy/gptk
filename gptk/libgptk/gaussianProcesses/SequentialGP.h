@@ -36,6 +36,7 @@
 #include "../covarianceFunctions/CovarianceFunction.h"
 #include "../likelihoodModels/LikelihoodType.h"
 #include "../likelihoodModels/GaussianSampLikelihood.h"
+#include "itppext/itppext.h"
 
 #include <cassert>
 
@@ -84,6 +85,8 @@ public:
 	 */
 	ivec getActiveSetIndices() { return idxActiveSet; }
 	mat  getActiveSetLocations() { return ActiveSet; }
+	
+	void setActiveSetSize(int n) { maxActiveSet = n; }
 	
 	// This is used by ModelTrainer to update the model after
 	// parameters have been changed.

@@ -8,7 +8,7 @@ csvstream::~csvstream()
 {
 }
 
-int csvstream::read(mat &M, string filename) 
+int csvstream::read(mat &M, const string filename) 
 {
 	vector < vector <string> > data;
 	vector<string> row;
@@ -86,7 +86,9 @@ int csvstream::read(mat &M, string filename)
 	return 0;
 }
 
-int csvstream::write(const mat M, string filename, int decimals) 
+
+
+int csvstream::write(const mat M, const string filename, int decimals) 
 {
 	int i,j;
 	

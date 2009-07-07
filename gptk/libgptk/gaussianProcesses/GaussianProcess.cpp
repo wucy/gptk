@@ -41,7 +41,7 @@ void GaussianProcess::makePredictions(vec& Mean, vec& Variance, const mat& Xpred
 	Mean = Cpred.transpose() * alpha;                                // mu* = k' * K^{-1} * y
 
 	vec variancePred(Xpred.rows());
-	covFunc.computeDiagonal(variancePred, Xpred);                    // k* = K(x*,x*)
+	cf.computeDiagonal(variancePred, Xpred);                    // k* = K(x*,x*)
 	mat v = ls_solve(computeCholesky(Sigma).transpose(), Cpred);     // v = K^{-1} * k
 	Variance = variancePred - sum(elem_mult(v, v));                  // diag( k* - k'*K^{-1}*k )
 }

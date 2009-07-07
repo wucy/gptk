@@ -65,7 +65,6 @@ void SCGModelTrainer::Train(int numIterations){
 	bool success;
 		
 	fOld = errorFunction(x);
-
 	fNow = fOld;
 
 	gradNew = errorGradients(x);
@@ -107,8 +106,6 @@ void SCGModelTrainer::Train(int numIterations){
 			sigma = sigma0 / sqrt(kappa);
 			xPlus = x + (sigma * direction);
 			gPlus = errorGradients(xPlus);
-			//cout << "  xPlus = " << xPlus << endl;
-			//cout << "  gPlus = " << gPlus << endl;
 			theta = dot(direction, gPlus - gradNew) / sigma;	
 		}
 		
@@ -117,10 +114,10 @@ void SCGModelTrainer::Train(int numIterations){
 		{	
 		    delta = beta * kappa;
 			beta = beta - ( theta / kappa );
-//		    double olddelta = delta;
-//		    double oldbeta = beta;
-//		    beta = 2.0*(oldbeta - olddelta/kappa);
-//		    delta = oldbeta*kappa - olddelta;
+		    //double olddelta = delta;
+		    //double oldbeta = beta;
+		    //beta = 2.0*(oldbeta - olddelta/kappa);
+		    //delta = oldbeta*kappa - olddelta;
 		}
 		alpha = - ( mu / delta );
 		//cout << "  alpha = " << alpha << endl;
@@ -138,6 +135,7 @@ void SCGModelTrainer::Train(int numIterations){
 			numSuccess++;
 			x = xNew;
 			// RB: DO NOT SET PARAMETERS HERE!!
+			// setParameters(x);
 			fNow = fNew;
 		}
 		else

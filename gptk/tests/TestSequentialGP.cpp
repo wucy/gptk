@@ -68,7 +68,6 @@ void TestSequentialGP::plotResults(vec ssgpmean, vec ssgpvar, vec gpmean, vec gp
 	vec activeX = (ssgp.getActiveSetLocations()).get_col(0);
 	vec activeY = Ytrn(ssgp.getActiveSetIndices());
 	gplot.plotPoints(activeX, activeY, "active points", CIRCLE, BLUE);
-	cout << ssgp.getActiveSetIndices() << endl;
 }
 
 
@@ -81,7 +80,7 @@ bool TestSequentialGP::testNoisySineFixedParams()
 {
 	vec Xtrn, Xtst, Ytrn, Ytst;
 	vec gpmean, gpvar, ssgpmean, ssgpvar;
-	int n_active = 7;
+	int n_active;
 	double range  = 3.2;                     
 	double sill   = 1.4;
 	double nugget = 0.01;
@@ -91,7 +90,8 @@ bool TestSequentialGP::testNoisySineFixedParams()
 		
 	// Load noisy sine data
 	loadNoisySineData(Xtrn, Ytrn, Xtst, Ytst, gpmean, gpvar);
-		
+	n_active = 10; // Ytrn.size();
+	
 	// Covariance function: Gaussian + Nugget
 	GaussianCF 	 g1(range, sill);            
 	WhiteNoiseCF g2(nugget);
@@ -105,13 +105,10 @@ bool TestSequentialGP::testNoisySineFixedParams()
 	// Gaussian observation likelihood
 	GaussianLikelihood gaussLik(nugget);
 		
-	//---------------------------------------------------------------
 	// Predict using SSGP
-	//---------------------------------------------------------------
-
 	ssgp.computePosterior(gaussLik);
 
-	ssgp.makePredictions(ssgpmean, ssgpvar, Xtst, predCovFunc);
+	ssgp.makePredictions(ssgpmean, ssgpvar, Xtst, g1);
 	
 	plotResults(ssgpmean, ssgpvar, gpmean, gpvar, Xtrn, Ytrn, Xtst, Ytst, ssgp);	
 	
@@ -129,16 +126,16 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	vec Xtrn, Xtst, Ytrn, Ytst;
 	vec gpmean, gpvar, ssgpmean, ssgpvar;
 	int n_active;
-	double range  = 4.2;                     
-	double sill   = 2.1;
-	double nugget = 0.01;
+	double range  = 0.2;                     
+	double sill   = 1.0;
+	double nugget = 0.1;
 
 	// Covariance function used for prediction
 	GaussianCF predCovFunc(range, sill);
 		
 	// Load noisy sine data
 	loadNoisySineData(Xtrn, Ytrn, Xtst, Ytst, gpmean, gpvar);
-	n_active = 20; // Ytrn.size();
+	n_active = 10; // Ytrn.length()-10;
 		
 	// Covariance function: Gaussian + Nugget
 	GaussianCF 	 g1(range, sill);            
@@ -152,41 +149,114 @@ bool TestSequentialGP::testNoisySineLearnParams()
 		
 	// Gaussian observation likelihood
 	GaussianLikelihood gaussLik(nugget);
+
 	ivec iActive = to_ivec(floor(linspace(0,Xtrnmat.rows()-1,n_active))); // maxDistance(Xtrnmat,n_active);
 	
 	ssgp.computePosteriorFixedActiveSet(gaussLik, iActive);
+	// ssgp.computePosterior(gaussLik);
 		
+	ssgp.makePredictions(ssgpmean, ssgpvar, Xtst, g1);
+	    
+	plotResults(ssgpmean, ssgpvar, gpmean, gpvar, Xtrn, Ytrn, Xtst, Ytst, ssgp);    
+	
 	// Learn parameters
 	SCGModelTrainer gpTrainer(ssgp);
 	ssgp.setLikelihoodType(UpperBound);
 
+	/*
+	// Compute likelihood profile for length scale and variance
+	vec params = oldParams;
+	mat likprof = zeros(100,100);
+	cout << endl;
+	for (int i=0; i<100; i++) {
+	    params(0) = oldParams(0) - 1.0 + 0.02*(1+i);
+	    for (int j=0; j<100; j++)
+	    {
+	        params(1) = oldParams(1) - 1.0 + 0.02*(1+j);
+	        ssgp.setParametersVector(params);
+	        likprof(i,j) = ssgp.objective();
+	    }
+	    cout << "\r" << i << flush;
+	}        
+	cout << endl;
+	csvstream csv;
+	csv.write(likprof, "likelihood_profile_params.csv");
+	
+	// Compute likelihood profile for length scale and variance
+	    mat likprof2 = zeros(400,400);
+	    cout << endl;
+	    for (int i=0; i<400; i++) {
+	        params(0) = -4.0 + 0.02*(1+i);
+	        for (int j=0; j<400; j++)
+	        {
+	            params(1) = - 4.0 + 0.02*(1+j);
+	            ssgp.setParametersVector(params);
+	            likprof2(i,j) = ssgp.objective();
+	        }
+	        cout << "\r" << i << flush;
+	    }        
+	    cout << endl;
+	    csv.write(likprof2, "likelihood_profile.csv");
+	  */  
+	
+	// Plot before training
+	// ssgp.makePredictions(ssgpmean, ssgpvar, Xtst, predCovFunc);
+	// plotResults(ssgpmean, ssgpvar, gpmean, gpvar, Xtrn, Ytrn, Xtst, Ytst, ssgp);    
 	gpTrainer.setCheckGradient(true);
-
 	
 	bvec optMask(3);
-	optMask(0) = true;
-	optMask(1) = true;
-	optMask(2) = false;
-	
-	for (int i=0; i<5; i++) {
-		gpTrainer.setOptimisationMask(optMask);
-		gpTrainer.Train(100);
-		gpTrainer.checkGradient();
-		ssgp.resetPosterior();
-		ssgp.computePosteriorFixedActiveSet(gaussLik,iActive);
-	}
-	
-	gCmp.displayCovarianceParameters();
-	
-	// Predict using SSGP
-	// ssgp.recomputePosterior();
 
-	ssgp.makePredictions(ssgpmean, ssgpvar, Xtst, g1);
+	//===============================================================
+	// It is critical to limit the number optimisation steps
+	// We don't want to reach full convergence, as the "optimal"
+	// solution is conditionned on our current estimate of the 
+	// C's and alpha's, and thus only optimal with respect to these.
+	// We need to optimise a little, then reestimate the C's and 
+	// alpha's, and repeat.
+	//===============================================================
+	for (int i=0; i<10; i++) 
+	{
+	    // Optimise covariance parameters 
+	    optMask(0) = true;
+	    optMask(1) = true;
+	    optMask(2) = false;
+	    gpTrainer.setOptimisationMask(optMask);
+	    
+	    gpTrainer.Train(5);
+	    gpTrainer.checkGradient();
+	    // g2.displayCovarianceParameters();
+	    
+	    // Recompute basis vectors 
+	    ssgp.resetPosterior();
+	    // ssgp.computePosterior(gaussLik);
+	    ssgp.computePosteriorFixedActiveSet(gaussLik,iActive);
+	    
+	    // Optimise noise parameters
+	    optMask(0) = false;
+	    optMask(1) = false;
+	    optMask(2) = true;
+	    gpTrainer.setOptimisationMask(optMask);
+	    gpTrainer.Train(5);
+	    gpTrainer.checkGradient();
+	    // g2.displayCovarianceParameters();
+	    
+	    ssgp.resetPosterior();
+	    ssgp.computePosteriorFixedActiveSet(gaussLik,iActive);
+	    // ssgp.computePosterior(gaussLik);
+
+	}
+	gCmp.displayCovarianceParameters();
+
+	// Plot after training
+    ssgp.makePredictions(ssgpmean, ssgpvar, Xtst, g1);
 	
 	plotResults(ssgpmean, ssgpvar, gpmean, gpvar, Xtrn, Ytrn, Xtst, Ytst, ssgp);	
 	
 	return false;	
 }
+
+
+
 
 
 /**
@@ -229,20 +299,23 @@ bool TestSequentialGP::testCheckGradient()
 	
 	// Make sure that checkGradient always returns the same answer
 	cout << endl << endl << "*** Check that gradient is not changed by successive calls *** " << endl; 
-	for (int i=0; i<10; i++)
+	for (int i=0; i<0; i++)
 		gpTrainer.checkGradient();
 
 	// Check the gradient while moving away from the stored
 	// parameters
 	cout << endl << endl << "*** Check that gradient remains OK when moving away from stored parameters *** " << endl;
+	
+	vec x = ssgp.getParametersVector();
+	vec eps = 0.1*ones(x.length());
+			
 	for (int i=0; i<10; i++) {
-		vec x = ssgp.getParametersVector();
 		cout << "X = " << endl;
 		gpTrainer.checkGradient();
-		ssgp.setParametersVector(x+0.1*ones(x.length()));
+		ssgp.setParametersVector(x+i*eps);
 	}
 
-	
+	cout << log(3.2) << " " << log(1.4) << " " << log(0.01) << endl;
 	return true;
 }
 

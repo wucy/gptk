@@ -43,26 +43,25 @@ public:
 	GaussianProcess(int Inputs, int Outputs, mat& Xdata, vec& ydata, CovarianceFunction& cf);
 	virtual ~GaussianProcess();
 
-	void makePredictions(vec& Mean, vec& Variance, const mat& Xpred, const mat& C) const;
-	
-	void makePredictions(vec& Mean, vec& Variance, const mat& Xpred, CovarianceFunction &cf) const;
-	void makePredictions(vec& Mean, vec& Variance, const mat& Xpred) const;
+	void   makePredictions(vec& Mean, vec& Variance, const mat& Xpred, const mat& C) const;
+	void   makePredictions(vec& Mean, vec& Variance, const mat& Xpred, CovarianceFunction &cf) const;
+	void   makePredictions(vec& Mean, vec& Variance, const mat& Xpred) const;
 	double loglikelihood() const;
 
-	vec getParametersVector() const;
-	void setParametersVector(const vec p);
+	vec    getParametersVector() const;
+	void   setParametersVector(const vec p);
 
 	double objective() const;
-	vec gradient() const;
+	vec    gradient() const;
 
-	void estimateParameters();
+	void   estimateParameters();
 
 private:
 
-	mat computeCholesky(const mat& iM) const;
-	mat computeInverseFromCholesky(const mat& C) const;
+	mat    computeCholesky(const mat& iM) const;
+	mat    computeInverseFromCholesky(const mat& C) const;
 
-	vec getGradientVector() const;
+	vec    getGradientVector() const;
 
 	CovarianceFunction& covFunc;
 	mat& Locations;

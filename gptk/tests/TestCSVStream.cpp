@@ -29,7 +29,7 @@ bool TestCSVStream::readWrite(const mat M) {
 
 bool TestCSVStream::testReadWrite() 
 {
-	mat M = randn(20,15);
+	mat M = randn(200,200);
 	return readWrite(M);
 }
 

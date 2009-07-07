@@ -41,6 +41,14 @@ demSSGP2:	demSSGP2.o
 demSSGPAlgo:	demSSGPAlgo.o
 	$(CXX) -o demSSGPAlgo demSSGPAlgo.o $(OBJS) $(LIBS)
 
+# SSGP on helicopter data
+demSSGPHelicopter: demSSGPHelicopter.o
+	$(CXX) -pg -o demSSGPHelicopter demSSGPHelicopter.o $(OBJS) $(LIBS)
+
+# SSGP demo
+demSSGP: demSSGP.o
+	$(CXX) -pg -o demSSGP demSSGP.o $(OBJS) $(LIBS)
+
 
 clean:
 	rm -f *.o $(EXE)
