@@ -244,7 +244,7 @@ int main()
 		ssgp.recomputePosterior();
 
 		cout << "Resetting posterior" << endl;
-		ssgp.resetPosterior();
+		//ssgp.resetPosterior();
 
 		gCmp.displayCovarianceParameters();
 	}

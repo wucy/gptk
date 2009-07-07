@@ -17,6 +17,7 @@ OBJS =		    covarianceFunctions/GaussianCF.o \
 				covarianceFunctions/CovarianceFunction.o \
 				covarianceFunctions/WhiteNoiseCF.o \
 				covarianceFunctions/SumCovarianceFunction.o \
+				covarianceFunctions/GenericCF.o \
 				covarianceFunctions/Transform.o \
 				covarianceFunctions/IdentityTransform.o \
 				covarianceFunctions/LogTransform.o \
@@ -41,7 +42,9 @@ OBJS =		    covarianceFunctions/GaussianCF.o \
 				gaussianProcesses/GaussianProcess.o \
 				gaussianProcesses/SequentialGP.o \
 				gaussianProcesses/ForwardModel.o \
-				io/csvstream.o
+				gaussianProcesses/SeparableGP.o \
+				io/csvstream.o \
+				itppext/itppext.o
 
 .cpp.o: 
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@	

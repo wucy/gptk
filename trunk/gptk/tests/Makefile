@@ -6,7 +6,8 @@ LIBS = $(LIBS_COMMON) -lgptk -L$(ROOT)/libgptk
 
 EXE = testSequentialGP testCSVStream testGradientCovFunc 
 
-all: testSequentialGP testCSVStream testGradientCovFunc
+all: testSequentialGP testCSVStream testGradientCovFunc testOptimisationSCG testGP \
+     testSeparableGP testITPPext
 
 
 # Compile sources into objects
@@ -27,6 +28,27 @@ testGradientCovFunc: TestGradientCovFunc.o Test.o
 testSequentialGP: TestSequentialGP.o Test.o
 	$(CXX) -o testSequentialGP TestSequentialGP.o Test.o $(LIBS)
 	@echo "** Successfully built testSequentialGP."
+
+# SCG
+testOptimisationSCG: TestOptimisationSCG.o Test.o
+	$(CXX) -o testOptimisationSCG TestOptimisationSCG.o Test.o $(LIBS)
+	@echo "** Successfully built testOptimisationSCG."
+
+# Gaussian Process
+testGP: TestGP.o Test.o
+	$(CXX) -o testGP TestGP.o Test.o $(LIBS)
+	@echo "** Successfully built testGP."
+
+# Separable Gaussian Process
+testSeparableGP: TestSeparableGP.o Test.o
+	$(CXX) -o testSeparableGP TestSeparableGP.o Test.o $(LIBS)
+	@echo "** Successfully built testSeparableGP."
+
+# ITPPEXT
+testITPPext: TestITPPext.o Test.o
+	$(CXX) -o testITPPext TestITPPext.o Test.o $(LIBS)
+	@echo "** Successfully built testITPPext."
+
 
 clean:
 	rm -f *.o $(EXE)

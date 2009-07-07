@@ -25,7 +25,7 @@ public:
 	 * @param matrix The matrix to which the data is read (does not need to be pre-allocated)
 	 * @param filename The name of the CSV file to read 
 	 **/
-	int read(mat &matrix, string filename);
+	int read(mat &matrix, const string filename);
 
 	/**
 	 * Writes a matrix to a CSV file
@@ -34,7 +34,7 @@ public:
 	 * @param filename The name of the CSV file to write to 
 	 * @params decimals The number of retained decimals 
 	 **/
-	int write(const mat matrix, string filename, int decimals = 5);
+	int write(const mat matrix, const string filename, int decimals = 5);
 
 };
 

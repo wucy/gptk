@@ -79,26 +79,38 @@ void SequentialGP::computePosterior(const LikelihoodType& noiseModel)
 		ivec rndIdx = sort_index(rndNums);
 
 		// Only add locations which are not already in the active set
+		/*
 		bvec activeIndex(Observations.length());
+		
 		if (selectiveSweep) {
     		for (int i=0; i<activeIndex.length(); i++)
     		    activeIndex(i) = true;
     		for (int i=0; i<idxActiveSet.length(); i++) 
     		    activeIndex(idxActiveSet(i)) = false;
 		}
-		
+		*/
 		
 		// send the observations individually
-		for(int i=0; i<Observations.length(); i++)	
+		
+		int nobs = Observations.length();
+		for(int i=0; i<nobs; i++)	
 		{
 		    // If selectiveSweep is set to true, only add location if it is not already 
 		    // in the active set. Otherwise, always add observation (even if already in
 		    // active set).
+		    /*
 		    if (selectiveSweep) {   
-		        if (activeIndex(rndIdx(i))) addOne(rndIdx(i), noiseModel, fixActiveSet);
+		        if (activeIndex(rndIdx(i))) 
+		            addOne(rndIdx(i), noiseModel, fixActiveSet);
+		        else
+		            cout << "Skipping observation " << rndIdx(i) << " (already in active set)" << endl; 
 		    }
-		    else 
-		        addOne(rndIdx(i), noiseModel, fixActiveSet);
+		    else
+		    */ 
+		    
+		    // cout << "Adding observations: " << rndIdx(i) << "/" << nobs << "\n";
+		    addOne(rndIdx(i), noiseModel, fixActiveSet);
+		     
 		}
 
 	}
@@ -115,13 +127,25 @@ void SequentialGP::computePosterior(const LikelihoodType& noiseModel)
 void SequentialGP::computePosteriorFixedActiveSet(const LikelihoodType& noiseModel, ivec iActive)
 {
 	assert(Locations.rows() == Observations.length());
-
+	
 	bool fixActiveSet = false;
 
-	// Add specified observations
-	for(int i=0; i<iActive.length(); i++)	
+	// Initialise active set
+	resetPosterior();
+	for(int i=0; i<iActive.length(); i++)  
 	{
 	    addOne(iActive(i), noiseModel, fixActiveSet);
+	}
+    		
+	// Do a randperm
+	vec rndNums = randu(Locations.rows());
+	ivec rndIdx = sort_index(rndNums);
+	
+	// Add specified observations
+	fixActiveSet = true;
+	for(int i=0; i<Observations.length(); i++)	
+	{
+	    addOne(rndIdx(i), noiseModel, fixActiveSet);
 	}
 }
 
@@ -277,7 +301,7 @@ inline void SequentialGP::addOne(int index, const LikelihoodType& noiseModel, co
 			while(sizeActiveSet > maxActiveSet)
 			{
 				int removalCandidate = findLeastInformativeActivePoint(FullKL);
-				// cout << "Deleting active point " << removalCandidate << endl;
+				// cout << "Deleting active point " << idxActiveSet(removalCandidate) << endl;
 				deleteActivePoint(removalCandidate);
 			}			
 		}
@@ -467,6 +491,7 @@ int SequentialGP::findLeastInformativeActivePoint(ScoringMethod sm)
 			// do nothing
 			break;
 	}
+
 	return leastInformativeIndex;
 }
 
@@ -483,7 +508,7 @@ void SequentialGP::deleteActivePoint(int index)
 
 	// calculate set difference
 	int delIdx = index;
-	vec restIdx(sizeActiveSet - 1);
+	ivec restIdx(sizeActiveSet - 1);
 	int temp = 0;
 	for(int i = 0; i < sizeActiveSet; i++)
 	{
@@ -863,9 +888,19 @@ double SequentialGP::compEvidenceUpperBound() const
 {
 	mat KB_new(sizeActiveSet, sizeActiveSet);
 	covFunc.computeSymmetric(KB_new, ActiveSet);
+	/*
+	double cond = itppext::cond(KB_new);
+	while (cond < 1e-6) {
+	    KB_new = KB_new + 1e-6*eye(KB_new.rows());
+	    cout << "Ill-conditionned matrix (cond = " << cond << ")" << endl;
+	    cond = itppext::cond(KB_new);
+	}
+	*/
 	double like1 = 2.0 * (sum(log(diag(computeCholesky(KB_new)))));
 	double like2 = trace((eye(sizeActiveSet) + 
 	       (KB * (C + outer_product(Alpha, Alpha)))) * backslash(KB_new, KB));
+	// cout << "lik1 = " << like1 << endl;
+	// cout << "lik2 = " << like2 << endl;
 	return like1 + like2;
 }
 
@@ -925,7 +960,14 @@ vec SequentialGP::gradientEvidenceUpperBound() const
 	mat W = eye(sizeActiveSet);
 	mat KB_new(sizeActiveSet, sizeActiveSet);
 	covFunc.computeSymmetric(KB_new, ActiveSet);
-
+	/*
+	double cond = itppext::cond(KB_new);
+	while (cond < 1e-6) {
+	    KB_new = KB_new + 1e-6*eye(KB_new.rows());
+	    cout << "Ill-conditionned matrix (cond = " << cond << ")" << endl;
+	    cond = itppext::cond(KB_new);
+	}
+	*/
 	// prob with lengthscale calculation somewhere here
 	// W = backslash(KB_new, W - (W + (KB * (C + outer_product(Alpha, Alpha)))) * backslash(KB_new, KB));
 	
