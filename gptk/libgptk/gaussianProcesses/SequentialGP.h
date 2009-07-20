@@ -51,13 +51,16 @@ enum LikelihoodCalculation {FullEvid, Approximate, UpperBound};
 class SequentialGP : public ForwardModel, public Optimisable
 {
 public:
-	SequentialGP(int Inputs, int Outputs, int nActivePoints, mat& Xdata, vec& ydata, CovarianceFunction& cf);
+	SequentialGP(int Inputs, int Outputs, int nActivePoints, mat& Xdata, vec& ydata, CovarianceFunction& cf, int _iterChanging = 4);
 	virtual ~SequentialGP();
 
 	void computePosterior(const LikelihoodType& noiseModel);
 	void computePosterior(const ivec& LikelihoodModel, const Vec<LikelihoodType *> noiseModels);
 	void resetPosterior();
 	void recomputePosterior();
+	
+	void computePosteriorFixedActiveSet(const LikelihoodType& noiseModel, ivec iActive);
+	void recomputePosteriorFixedActiveSet(const LikelihoodType& noiseModel);
 	
 	/**
 	 * Make predictions at a set of locations Xpred. The mean and variance
@@ -94,7 +97,7 @@ public:
 	
 	void setSelectiveSweep(bool b);
 	
-	void computePosteriorFixedActiveSet(const LikelihoodType& noiseModel, ivec iActive);
+	
 	
 private:
 

@@ -6,7 +6,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 SequentialGP::SequentialGP(int Inputs, int Outputs, int nActivePoints, mat& Xdata, vec& ydata, 
-		                   CovarianceFunction& cf) : ForwardModel(Inputs, Outputs), 
+		                   CovarianceFunction& cf, int _iterChanging) : ForwardModel(Inputs, Outputs), 
 		                   Locations(Xdata), Observations(ydata), covFunc(cf)
 {
 	assert(Locations.rows() == Observations.size());
@@ -30,7 +30,7 @@ SequentialGP::SequentialGP(int Inputs, int Outputs, int nActivePoints, mat& Xdat
 	epsilonTolerance = 1e-6;
 
 	momentProjection = true;
-	iterChanging = 4;
+	iterChanging = _iterChanging;
 	iterFixed = 1;
 
 //	likelihoodType = FullEvid;
@@ -108,10 +108,10 @@ void SequentialGP::computePosterior(const LikelihoodType& noiseModel)
 		    else
 		    */ 
 		    
-		    // cout << "Adding observations: " << rndIdx(i) << "/" << nobs << "\n";
+		    // cout << "\rAdding observations: " << rndIdx(i) << "/" << nobs;
 		    addOne(rndIdx(i), noiseModel, fixActiveSet);
-		     
 		}
+		// cout << endl;
 
 	}
 
@@ -131,24 +131,29 @@ void SequentialGP::computePosteriorFixedActiveSet(const LikelihoodType& noiseMod
 	bool fixActiveSet = false;
 
 	// Initialise active set
-	resetPosterior();
 	for(int i=0; i<iActive.length(); i++)  
 	{
 	    addOne(iActive(i), noiseModel, fixActiveSet);
 	}
-    		
+	recomputePosteriorFixedActiveSet(noiseModel);
+}
+
+/**
+ * Revisit data with fixed active set
+ */
+void SequentialGP::recomputePosteriorFixedActiveSet(const LikelihoodType& noiseModel)
+{
 	// Do a randperm
 	vec rndNums = randu(Locations.rows());
 	ivec rndIdx = sort_index(rndNums);
-	
-	// Add specified observations
-	fixActiveSet = true;
+
+	// Visit all observations
+	bool fixActiveSet = true;
 	for(int i=0; i<Observations.length(); i++)	
 	{
-	    addOne(rndIdx(i), noiseModel, fixActiveSet);
+		addOne(rndIdx(i), noiseModel, fixActiveSet);
 	}
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -653,7 +658,7 @@ void SequentialGP::makePredictions(vec& Mean, vec& Variance, const mat& Xpred,
 
 	Mean = Cpred * Alpha;
 	vec sigsq(Xpred.rows());
-	cf.computeDiagonal(sigsq, Xpred);
+	covFunc.computeDiagonal(sigsq, Xpred);
 	Variance = sigsq + sum(elem_mult((Cpred * C), Cpred), 2);
 }
 
