@@ -21,6 +21,8 @@ mat utr_mat(vec v);     // Upper triangular matrix
 
 double cond(mat M, int p=2); // Condition number for matrix p-norm (1 or 2)
 
+ivec randperm(int n);  // Random permutation of numbers between 0 and N-1
+
 } // END OF NAMESPACE ITPPEXT
 
 

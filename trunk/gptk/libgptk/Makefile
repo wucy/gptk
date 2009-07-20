@@ -42,9 +42,10 @@ OBJS =		    covarianceFunctions/GaussianCF.o \
 				gaussianProcesses/GaussianProcess.o \
 				gaussianProcesses/SequentialGP.o \
 				gaussianProcesses/ForwardModel.o \
-				gaussianProcesses/SeparableGP.o \
 				io/csvstream.o \
-				itppext/itppext.o
+				itppext/itppext.o \
+				design/MinMaxDesign.o \
+				design/MaxMinDesign.o \
 
 .cpp.o: 
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@	

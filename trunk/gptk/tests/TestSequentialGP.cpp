@@ -40,6 +40,19 @@ void TestSequentialGP::loadNoisySineData(vec &Xtrn, vec &Ytrn, vec &Xtst, vec &Y
 }
 
 
+void TestSequentialGP::plotOptLog(mat theta) 
+{
+    GraphPlotter gplot = GraphPlotter();
+    gplot.clearPlot();
+
+    vec iter = linspace(1,theta.rows(),theta.rows());
+    
+    // Plot ssgp
+    gplot.plotPoints(iter, theta.get_col(0), "length scale", LINE, BLUE);
+    gplot.plotPoints(iter, theta.get_col(1), "proc var", LINE, RED);
+    gplot.plotPoints(iter, theta.get_col(2), "nugget", LINE, GREEN);
+}
+
 /**
  * Plot the mean and variance of SSGP and GP, along with
  * training data and noiseless function.
@@ -115,8 +128,7 @@ bool TestSequentialGP::testNoisySineFixedParams()
 	return false;	
 }
 
-
-/**
+/** -----------------------------------------------------------------------------------------------------
  * Compares SSGP with standard GP on noisy sine data. Parameters
  * (length scale, process variance and noise variance) are estimated
  * from the data.
@@ -126,16 +138,17 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	vec Xtrn, Xtst, Ytrn, Ytst;
 	vec gpmean, gpvar, ssgpmean, ssgpvar;
 	int n_active;
-	double range  = 0.2;                     
+
+	double range  = 5.2;                     
 	double sill   = 1.0;
-	double nugget = 0.1;
+	double nugget = 0.01;
 
 	// Covariance function used for prediction
 	GaussianCF predCovFunc(range, sill);
 		
 	// Load noisy sine data
 	loadNoisySineData(Xtrn, Ytrn, Xtst, Ytst, gpmean, gpvar);
-	n_active = 10; // Ytrn.length()-10;
+	n_active =  10; // Ytrn.length();
 		
 	// Covariance function: Gaussian + Nugget
 	GaussianCF 	 g1(range, sill);            
@@ -145,13 +158,14 @@ bool TestSequentialGP::testNoisySineLearnParams()
 
 	// Initialise sequential GP
 	mat Xtrnmat = Xtrn;
-	SequentialGP ssgp(1, 1, n_active, Xtrnmat, Ytrn, gCmp);
+	SequentialGP ssgp(1, 1, n_active, Xtrnmat, Ytrn, gCmp, 1);
 		
 	// Gaussian observation likelihood
 	GaussianLikelihood gaussLik(nugget);
 
-	ivec iActive = to_ivec(floor(linspace(0,Xtrnmat.rows()-1,n_active))); // maxDistance(Xtrnmat,n_active);
-	
+	// ivec iActive = to_ivec(floor(linspace(0,Xtrnmat.rows()-1,n_active)));
+	MaxMinDesign design(100);
+	ivec iActive = design.subsample(Xtrnmat, Ytrn, n_active);
 	ssgp.computePosteriorFixedActiveSet(gaussLik, iActive);
 	// ssgp.computePosterior(gaussLik);
 		
@@ -206,6 +220,10 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	
 	bvec optMask(3);
 
+	int niter = 10;
+	mat theta = zeros(niter+1,3);
+	theta.set_row(0, ssgp.getParametersVector());
+
 	//===============================================================
 	// It is critical to limit the number optimisation steps
 	// We don't want to reach full convergence, as the "optimal"
@@ -214,7 +232,7 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	// We need to optimise a little, then reestimate the C's and 
 	// alpha's, and repeat.
 	//===============================================================
-	for (int i=0; i<10; i++) 
+	for (int i=0; i<niter; i++) 
 	{
 	    // Optimise covariance parameters 
 	    optMask(0) = true;
@@ -224,14 +242,17 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	    
 	    gpTrainer.Train(5);
 	    gpTrainer.checkGradient();
-	    // g2.displayCovarianceParameters();
 	    
 	    // Recompute basis vectors 
 	    ssgp.resetPosterior();
 	    // ssgp.computePosterior(gaussLik);
 	    ssgp.computePosteriorFixedActiveSet(gaussLik,iActive);
+	    // ssgp.recomputePosteriorFixedActiveSet(gaussLik);
+	    // ssgp.recomputePosterior();
+	    	    
 	    
-	    // Optimise noise parameters
+	        // Optimise noise parameters
+	    /*
 	    optMask(0) = false;
 	    optMask(1) = false;
 	    optMask(2) = true;
@@ -239,23 +260,33 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	    gpTrainer.Train(5);
 	    gpTrainer.checkGradient();
 	    // g2.displayCovarianceParameters();
-	    
+
 	    ssgp.resetPosterior();
-	    ssgp.computePosteriorFixedActiveSet(gaussLik,iActive);
-	    // ssgp.computePosterior(gaussLik);
-
+	    ssgp.computePosterior(gaussLik);
+	    // ssgp.computePosteriorFixedActiveSet(gaussLik,iActive);
+	    */
+	    
+	    theta.set_row(i+1, ssgp.getParametersVector());
 	}
+	
 	gCmp.displayCovarianceParameters();
-
+	
+	// Recompute posterior using estimated parameters
+	// and smaller active set
+	// ssgp.setActiveSetSize(10);
+	// ssgp.resetPosterior();
+	// ivec iActive = to_ivec(floor(linspace(0,Xtrnmat.rows()-1,10)));
+	// ssgp.computePosteriorFixedActiveSet(gaussLik, iActive);
+	// ssgp.computePosterior(gaussLik);
+	
 	// Plot after training
     ssgp.makePredictions(ssgpmean, ssgpvar, Xtst, g1);
 	
-	plotResults(ssgpmean, ssgpvar, gpmean, gpvar, Xtrn, Ytrn, Xtst, Ytst, ssgp);	
+	plotResults(ssgpmean, ssgpvar, gpmean, gpvar, Xtrn, Ytrn, Xtst, Ytst, ssgp);
+	plotOptLog(theta); 
 	
 	return false;	
 }
-
-
 
 
 

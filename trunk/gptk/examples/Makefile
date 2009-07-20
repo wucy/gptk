@@ -39,15 +39,11 @@ demSSGP2:	demSSGP2.o
 
 # Sequentiall Gaussian Process Demonstration 2
 demSSGPAlgo:	demSSGPAlgo.o
-	$(CXX) -o demSSGPAlgo demSSGPAlgo.o $(OBJS) $(LIBS)
+	$(CXX) -o demSSGPAlgo demSSGPAlgo.o $(LIBS)
 
-# SSGP on helicopter data
-demSSGPHelicopter: demSSGPHelicopter.o
-	$(CXX) -pg -o demSSGPHelicopter demSSGPHelicopter.o $(OBJS) $(LIBS)
-
-# SSGP demo
-demSSGP: demSSGP.o
-	$(CXX) -pg -o demSSGP demSSGP.o $(OBJS) $(LIBS)
+# Sequentiall Gaussian Process - Helicopter data set
+demSSGPHelicopter:	demSSGPHelicopter.o
+	$(CXX) -o demSSGPHelicopter demSSGPHelicopter.o $(LIBS)
 
 
 clean:

@@ -103,5 +103,13 @@ double cond(mat M, int p) {
     return itpp::norm(M,p)*itpp::norm(inv(M),p);
 }
 
+/**
+ * Returns a random permutation of numbers between 0 and N-1
+ */
+ivec randperm(int n) {
+	vec rndNums = randu(n);
+	return sort_index(rndNums);
+}
+
 
 } // END OF NAMESPACE ITPPEXT
