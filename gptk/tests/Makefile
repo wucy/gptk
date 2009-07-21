@@ -7,7 +7,7 @@ LIBS = $(LIBS_COMMON) -lgptk -L$(ROOT)/libgptk
 EXE = testSequentialGP testCSVStream testGradientCovFunc 
 
 all: testSequentialGP testCSVStream testGradientCovFunc testOptimisationSCG testGP \
-     testSeparableGP testITPPext
+     testITPPext
 
 
 # Compile sources into objects

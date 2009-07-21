@@ -17,7 +17,6 @@ OBJS =		    covarianceFunctions/GaussianCF.o \
 				covarianceFunctions/CovarianceFunction.o \
 				covarianceFunctions/WhiteNoiseCF.o \
 				covarianceFunctions/SumCovarianceFunction.o \
-				covarianceFunctions/GenericCF.o \
 				covarianceFunctions/Transform.o \
 				covarianceFunctions/IdentityTransform.o \
 				covarianceFunctions/LogTransform.o \

@@ -2,7 +2,7 @@
 
 MaxMinDesign::MaxMinDesign(int _nsamples)
 {
-    if (nsamples <= 0) {
+    if (_nsamples <= 0) {
         cout << "Warning: Negative sample number in MaxMinDesign constructor." << endl;
         cout << "         Reverting to default (100)" << endl;
         nsamples = 100;
