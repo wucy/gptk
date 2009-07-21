@@ -138,9 +138,8 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	vec Xtrn, Xtst, Ytrn, Ytst;
 	vec gpmean, gpvar, ssgpmean, ssgpvar;
 	int n_active;
-
-	double range  = 5.2;                     
-	double sill   = 1.0;
+	double range  = 3.2;                     
+	double sill   = 1.4;
 	double nugget = 0.01;
 
 	// Covariance function used for prediction
@@ -166,12 +165,15 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	// ivec iActive = to_ivec(floor(linspace(0,Xtrnmat.rows()-1,n_active)));
 	MaxMinDesign design(100);
 	ivec iActive = design.subsample(Xtrnmat, Ytrn, n_active);
-	ssgp.computePosteriorFixedActiveSet(gaussLik, iActive);
-	// ssgp.computePosterior(gaussLik);
+
+	// ssgp.computePosteriorFixedActiveSet(gaussLik, iActive);
+	ssgp.computePosterior(gaussLik);
 		
 	ssgp.makePredictions(ssgpmean, ssgpvar, Xtst, g1);
 	    
 	plotResults(ssgpmean, ssgpvar, gpmean, gpvar, Xtrn, Ytrn, Xtst, Ytst, ssgp);    
+	
+	return 0;
 	
 	// Learn parameters
 	SCGModelTrainer gpTrainer(ssgp);
@@ -219,7 +221,7 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	gpTrainer.setCheckGradient(true);
 	
 	bvec optMask(3);
-
+	
 	int niter = 10;
 	mat theta = zeros(niter+1,3);
 	theta.set_row(0, ssgp.getParametersVector());
@@ -279,6 +281,16 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	// ssgp.computePosteriorFixedActiveSet(gaussLik, iActive);
 	// ssgp.computePosterior(gaussLik);
 	
+	
+	
+	// Recompute posterior using estimated parameters
+	// and smaller active set
+	// ssgp.setActiveSetSize(10);
+	// ssgp.resetPosterior();
+	// ivec iActive = to_ivec(floor(linspace(0,Xtrnmat.rows()-1,10)));
+	// ssgp.computePosteriorFixedActiveSet(gaussLik, iActive);
+	// ssgp.computePosterior(gaussLik);
+	
 	// Plot after training
     ssgp.makePredictions(ssgpmean, ssgpvar, Xtst, g1);
 	
@@ -290,7 +302,7 @@ bool TestSequentialGP::testNoisySineLearnParams()
 
 
 
-/**
+/** -----------------------------------------------------------------------------------------------------
  * Performs several gradient checks
  * This test was used to identify an issue with the checkGradient() 
  * method in ModelTrainer.
