@@ -111,5 +111,20 @@ ivec randperm(int n) {
 	return sort_index(rndNums);
 }
 
+/**
+ * Returns the vector of minimum elements from 2 vectors, i.e.
+ * z(i) = min(u(i), v(i)).
+ */
+vec min(vec u, vec v) {
+    assert(u.length() == v.length());
+    
+    vec z(u.length());
+    
+    for (int i=0; i<u.length(); i++) z(i) = std::min(u(i), v(i));
+    
+    return z;
+}
 
 } // END OF NAMESPACE ITPPEXT
+
+

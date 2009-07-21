@@ -45,6 +45,7 @@ OBJS =		    covarianceFunctions/GaussianCF.o \
 				itppext/itppext.o \
 				design/MinMaxDesign.o \
 				design/MaxMinDesign.o \
+				design/GreedyMaxMinDesign.o
 
 .cpp.o: 
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@	

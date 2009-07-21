@@ -17,7 +17,7 @@ class MaxMinDesign : public Design
 public:
 	MaxMinDesign(int nsamples = 100);   // Pass in the number of subsamples for minimisation
 	virtual ~MaxMinDesign();
-	ivec subsample(mat X, vec y, int sample_size);
+	ivec subsample(mat X, int sample_size);
 	
 private:
     
