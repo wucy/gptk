@@ -138,8 +138,8 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	vec Xtrn, Xtst, Ytrn, Ytst;
 	vec gpmean, gpvar, ssgpmean, ssgpvar;
 	int n_active;
-	double range  = 3.2;                     
-	double sill   = 1.4;
+	double range  = 4.2;                     
+	double sill   = 1.0;
 	double nugget = 0.01;
 
 	// Covariance function used for prediction
@@ -163,8 +163,8 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	GaussianLikelihood gaussLik(nugget);
 
 	// ivec iActive = to_ivec(floor(linspace(0,Xtrnmat.rows()-1,n_active)));
-	MaxMinDesign design(100);
-	ivec iActive = design.subsample(Xtrnmat, Ytrn, n_active);
+	// MaxMinDesign design(100);
+	// ivec iActive = design.subsample(Xtrnmat, Ytrn, n_active);
 
 	// ssgp.computePosteriorFixedActiveSet(gaussLik, iActive);
 	ssgp.computePosterior(gaussLik);
@@ -172,8 +172,6 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	ssgp.makePredictions(ssgpmean, ssgpvar, Xtst, g1);
 	    
 	plotResults(ssgpmean, ssgpvar, gpmean, gpvar, Xtrn, Ytrn, Xtst, Ytst, ssgp);    
-	
-	return 0;
 	
 	// Learn parameters
 	SCGModelTrainer gpTrainer(ssgp);
@@ -247,8 +245,8 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	    
 	    // Recompute basis vectors 
 	    ssgp.resetPosterior();
-	    // ssgp.computePosterior(gaussLik);
-	    ssgp.computePosteriorFixedActiveSet(gaussLik,iActive);
+	    ssgp.computePosterior(gaussLik);
+	    // ssgp.computePosteriorFixedActiveSet(gaussLik,iActive);
 	    // ssgp.recomputePosteriorFixedActiveSet(gaussLik);
 	    // ssgp.recomputePosterior();
 	    	    
@@ -297,7 +295,7 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	plotResults(ssgpmean, ssgpvar, gpmean, gpvar, Xtrn, Ytrn, Xtst, Ytst, ssgp);
 	plotOptLog(theta); 
 	
-	return false;	
+	return true;	
 }
 
 

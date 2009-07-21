@@ -6,6 +6,7 @@
  */
 
 #include <cassert>
+#include <math.h>
 #include <itpp/itbase.h>
 #include <itpp/itstat.h>
 
@@ -22,6 +23,8 @@ mat utr_mat(vec v);     // Upper triangular matrix
 double cond(mat M, int p=2); // Condition number for matrix p-norm (1 or 2)
 
 ivec randperm(int n);  // Random permutation of numbers between 0 and N-1
+
+vec min(vec u, vec v); // Minimum elements from 2 vectors of equal length 
 
 } // END OF NAMESPACE ITPPEXT
 

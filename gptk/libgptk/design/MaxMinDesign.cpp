@@ -13,13 +13,14 @@ MaxMinDesign::MaxMinDesign(int _nsamples)
 
 MaxMinDesign::~MaxMinDesign()
 {
+    
 }
 
 /**
  * Returns a random subsample of X of size n which has minimum (amongst 
  * a set of NSAMPLES similar subsamples) maximum distance between points.
  */     
-ivec MaxMinDesign::subsample(mat X, vec y, int n)
+ivec MaxMinDesign::subsample(mat X, int n)
 {
     if (n <= 0)
         cerr << "Invalid sample size in MaxMinDesign::subsample(...)" << endl;

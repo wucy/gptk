@@ -133,8 +133,10 @@ void SequentialGP::computePosteriorFixedActiveSet(const LikelihoodType& noiseMod
 	// Initialise active set
 	for(int i=0; i<iActive.length(); i++)  
 	{
+	    cout << "\rAdding observations: " << i << "/" << iActive.length();
 	    addOne(iActive(i), noiseModel, fixActiveSet);
 	}
+	cout << endl;
 	recomputePosteriorFixedActiveSet(noiseModel);
 }
 
@@ -151,8 +153,10 @@ void SequentialGP::recomputePosteriorFixedActiveSet(const LikelihoodType& noiseM
 	bool fixActiveSet = true;
 	for(int i=0; i<Observations.length(); i++)	
 	{
-		addOne(rndIdx(i), noiseModel, fixActiveSet);
+	    cout << "\rAdding observations: " << i << "/" << Observations.length();
+	    addOne(rndIdx(i), noiseModel, fixActiveSet);
 	}
+	cout << endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

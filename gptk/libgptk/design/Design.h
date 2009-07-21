@@ -12,8 +12,10 @@ class Design
 {
 public:
 	
+    virtual ~Design() {};
+    
     // Subsample sample_size locations from X 
-	virtual ivec subsample(mat X, vec y, int sample_size) = 0;
+	virtual ivec subsample(mat X, int sample_size) = 0;
 };
 
 #endif /*DESIGN_H_*/

@@ -23,7 +23,7 @@
 #include "optimisation/CGModelTrainer.h"
 #include "optimisation/QuasiNewtonModelTrainer.h"
 
-#include "design/MaxMinDesign.h"
+#include "design/GreedyMaxMinDesign.h"
 
 #include "likelihoodModels/GaussianLikelihood.h"
 
@@ -74,37 +74,26 @@ int main()
     vec Y, Ytst;
     vec ssgpmean, ssgpvar;
     int n_active;
-    /*
-    double range  = 10.0;                     
-    double sill   = 10000.0;
-    double nugget = 5.0;
-    */
-    double range  = 5.0;                     
-    double sill   = 2.0;
+    
+    double range  = 0.5;                     
+    double sill   = 1.0;
     double nugget = 0.01;
     
     // Read data in
     cout << "Loading data" << endl;
-    /*
-    if (loadData("helicopter_shifted.csv", X, Y)) {
-        die("Failed to load data. Aborting.");
-    }
-    */
-    
-    if (loadData("gp2d_trn.csv", X, Y) || loadData("gp2d_tst.csv", Xtst, Ytst) ) {
+
+    if (loadData("helicopter_normalised.csv", X, Y)) {
         die("Failed to load data. Aborting.");
     }
     
     // Test set - uniform grid between input min and input max
     int nin = X.cols();
-    cout << nin << endl;
-    int ngrid = Xtst.rows();
-    /*
-    int ngrid = 100;
+    int ngrid = 200;
     Xtst = zeros(ngrid*ngrid, nin);
     
     vec X1 = linspace(min(X.get_col(0)), max(X.get_col(0)), ngrid);
     vec X2 = linspace(min(X.get_col(1)), max(X.get_col(1)), ngrid);
+    
     for (int i=0; i<ngrid; i++) 
     {
         for (int j=0; j<ngrid; j++) {
@@ -112,9 +101,8 @@ int main()
             Xtst(i*ngrid+j,1) = X2(j);
         }
     }
-    */
     
-    n_active = 60; //Y.length();
+    n_active = 100; //Y.length();
 
     // Covariance function: Gaussian + Nugget
     GaussianCF   g1(range, sill);
@@ -129,11 +117,21 @@ int main()
     // Gaussian observation likelihood
     GaussianLikelihood gaussLik(nugget);
 
-    // Predict using SSGP
+    // Select active set
+    cout << "Selecting active set" << endl;
+    
+    GreedyMaxMinDesign design;
+    mat XY(X.rows(), X.cols()+1);
+    XY.set_cols(0,X);
+    XY.set_col(2,Y);
+    
+    
+    ivec iActive = design.subsample(X, n_active);
+    cout << iActive << endl;
+
+    // Compute posterior
     cout << "Computing posterior" << endl;
     // ssgp.computePosterior(gaussLik);
-    MaxMinDesign design(100);
-    ivec iActive = design.subsample(X, Y, n_active);
     ssgp.computePosteriorFixedActiveSet(gaussLik, iActive);
     
     // Learn parameters
@@ -144,8 +142,12 @@ int main()
     gpTrainer.setCheckGradient(true);
         
     cout << "Optimising parameters" << endl;
-    for (int i=0; i<5; i++) 
+    int niter = 5;
+    for (int i=0; i<niter; i++) 
     {
+        cout << endl << endl << "-- " << i+1 << "/" << niter;
+        cout << " ------------------------------------------------------------------------------" << endl;
+        
         // Optimise covariance parameters 
         optMask(0) = true;
         optMask(1) = true;
@@ -182,28 +184,31 @@ int main()
     ssgp.makePredictions(ssgpmean, ssgpvar, Xtst, g1);
     
     mat xActive = ssgp.getActiveSetLocations();
-    xActive.set_size(ngrid, nin, true);
+    // cout << xActive << endl;
+    // xActive.set_size(ngrid, nin, true);
     
     cout << "Saving data" << endl;
-    mat data = Xtst;
-    data.set_size(ngrid, nin+3+nin, true);
-    data.set_col(nin, ssgpmean);
-    data.set_col(nin+1, ssgpvar);
-    data.set_col(nin+2, xActive.get_col(0));
-    data.set_col(nin+3, xActive.get_col(1));
-    data.set_col(nin+4, Y(ssgp.getActiveSetIndices()));
+    mat data = zeros(ngrid*ngrid, nin+4);
+    
+    data.set_cols(0,Xtst);
+    data.set_col(nin, ssgpmean);                         // Mean prediction
+    data.set_col(nin+1, ssgpvar);                        // Var prediction
+    data.set_col(nin+2, xActive.get_col(0));                        // Active locations
+    data.set_col(nin+3, xActive.get_col(1));                        // Active locations
+    // data.set_col(nin+2+nin, Y(ssgp.getActiveSetIndices()));  // Active indices
     
     // Save prediction data
     csvstream csv;
-    if (csv.write(data, "gp2d_pred.csv"))
+    if (csv.write(data, "helicopter_pred.csv"))
         die("Could not write prediction data to file.");
     
     // Save ssgp parameters
-    if (csv.write(ssgp.getParametersVector(), "gp2d_params.csv"))
-            die("Could not write parameters to file.");
+    if (csv.write(ssgp.getParametersVector(), "helicopter_params.csv"))
+        die("Could not write parameters to file.");
     
     
-    cout << "End of example" << endl;
+    cout << "End of helicopter example" << endl;
+    
     return 0;
     
 }
