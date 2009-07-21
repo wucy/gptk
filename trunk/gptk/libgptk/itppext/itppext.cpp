@@ -98,7 +98,8 @@ mat utr_mat(vec v)
     return M;
 }
 
-double cond(mat M, int p) {
+double cond(mat M, int p) 
+{
     assert(M.rows() == M.cols());
     return itpp::norm(M,p)*itpp::norm(inv(M),p);
 }
@@ -106,7 +107,8 @@ double cond(mat M, int p) {
 /**
  * Returns a random permutation of numbers between 0 and N-1
  */
-ivec randperm(int n) {
+ivec randperm(int n) 
+{
 	vec rndNums = randu(n);
 	return sort_index(rndNums);
 }
@@ -115,12 +117,14 @@ ivec randperm(int n) {
  * Returns the vector of minimum elements from 2 vectors, i.e.
  * z(i) = min(u(i), v(i)).
  */
-vec min(vec u, vec v) {
+vec min(vec u, vec v) 
+{
     assert(u.length() == v.length());
     
     vec z(u.length());
     
-    for (int i=0; i<u.length(); i++) z(i) = std::min(u(i), v(i));
+    for (int i=0; i<u.length(); i++) 
+        z(i) = std::min(u(i), v(i));
     
     return z;
 }
