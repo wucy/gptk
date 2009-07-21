@@ -22,7 +22,7 @@ ivec GreedyMaxMinDesign::subsample(mat X, int n)
     int imax;
     
     ivec isample(n);        // Indices of points in sample
-    ivec iremain;        // Indices of remaining points
+    ivec iremain;           // Indices of remaining points
     vec D;                  // Vector of min distances to sample
     
     iremain = to_ivec(linspace(0,X.rows()-1,X.rows()));
@@ -31,25 +31,21 @@ ivec GreedyMaxMinDesign::subsample(mat X, int n)
     max(X.get_col(X.cols()-1), imax);
     isample(0) = imax;
     iremain.del(imax);
-   
 
     // Add points having maximum minimum distance to sample
     // until subsample size is reached 
     for (int i=1; i<n; i++) 
     {
-    	vec xnew = X.get_row(isample(i-1));        // Last point added 
-        vec Dnew = dist(X.get_rows(iremain), xnew);         // Distances to xnew
-        
-        cout << Dnew.length() << endl;
-        cout << D.length() << endl;
-        
+    	vec xnew = X.get_row(isample(i-1));                // Last point added 
+        vec Dnew = dist(X.get_rows(iremain), xnew);        // Distances to xnew
+                
         // Update minimum distances to sample
         if (D.length() == 0) 
             D = Dnew;
         else
             D = min(D,Dnew);
         
-        // Find point max min distance
+        // Find point with max min distance
         max(D,imax);
         
         // Add it to sample 

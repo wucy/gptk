@@ -135,11 +135,11 @@ bool TestSequentialGP::testNoisySineFixedParams()
  **/ 
 bool TestSequentialGP::testNoisySineLearnParams() 
 {
-	vec Xtrn, Xtst, Ytrn, Ytst;
-	vec gpmean, gpvar, ssgpmean, ssgpvar;
-	int n_active;
-	double range  = 4.2;                     
-	double sill   = 1.0;
+	vec Xtrn, Xtst, Ytrn, Ytst;               // Training and test data
+	vec gpmean, gpvar, ssgpmean, ssgpvar;     // Prediction results
+	int n_active;                             // Number of active points
+	double range  = 2.2;                      // Parameters
+	double sill   = 3.0;
 	double nugget = 0.01;
 
 	// Covariance function used for prediction
@@ -157,11 +157,12 @@ bool TestSequentialGP::testNoisySineLearnParams()
 
 	// Initialise sequential GP
 	mat Xtrnmat = Xtrn;
-	SequentialGP ssgp(1, 1, n_active, Xtrnmat, Ytrn, gCmp, 1);
+	SequentialGP ssgp(1, 1, n_active, Xtrnmat, Ytrn, gCmp);
 		
 	// Gaussian observation likelihood
 	GaussianLikelihood gaussLik(nugget);
 
+	// Use Maximin design
 	// ivec iActive = to_ivec(floor(linspace(0,Xtrnmat.rows()-1,n_active)));
 	// MaxMinDesign design(100);
 	// ivec iActive = design.subsample(Xtrnmat, Ytrn, n_active);
@@ -169,53 +170,17 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	// ssgp.computePosteriorFixedActiveSet(gaussLik, iActive);
 	ssgp.computePosterior(gaussLik);
 		
+	// Plot SSGP with initial parameters
 	ssgp.makePredictions(ssgpmean, ssgpvar, Xtst, g1);
-	    
 	plotResults(ssgpmean, ssgpvar, gpmean, gpvar, Xtrn, Ytrn, Xtst, Ytst, ssgp);    
 	
+	
 	// Learn parameters
+	cout << endl << "Press a key to start parameter estimation" << endl;
+	getchar();
+	    
 	SCGModelTrainer gpTrainer(ssgp);
 	ssgp.setLikelihoodType(UpperBound);
-
-	/*
-	// Compute likelihood profile for length scale and variance
-	vec params = oldParams;
-	mat likprof = zeros(100,100);
-	cout << endl;
-	for (int i=0; i<100; i++) {
-	    params(0) = oldParams(0) - 1.0 + 0.02*(1+i);
-	    for (int j=0; j<100; j++)
-	    {
-	        params(1) = oldParams(1) - 1.0 + 0.02*(1+j);
-	        ssgp.setParametersVector(params);
-	        likprof(i,j) = ssgp.objective();
-	    }
-	    cout << "\r" << i << flush;
-	}        
-	cout << endl;
-	csvstream csv;
-	csv.write(likprof, "likelihood_profile_params.csv");
-	
-	// Compute likelihood profile for length scale and variance
-	    mat likprof2 = zeros(400,400);
-	    cout << endl;
-	    for (int i=0; i<400; i++) {
-	        params(0) = -4.0 + 0.02*(1+i);
-	        for (int j=0; j<400; j++)
-	        {
-	            params(1) = - 4.0 + 0.02*(1+j);
-	            ssgp.setParametersVector(params);
-	            likprof2(i,j) = ssgp.objective();
-	        }
-	        cout << "\r" << i << flush;
-	    }        
-	    cout << endl;
-	    csv.write(likprof2, "likelihood_profile.csv");
-	  */  
-	
-	// Plot before training
-	// ssgp.makePredictions(ssgpmean, ssgpvar, Xtst, predCovFunc);
-	// plotResults(ssgpmean, ssgpvar, gpmean, gpvar, Xtrn, Ytrn, Xtst, Ytst, ssgp);    
 	gpTrainer.setCheckGradient(true);
 	
 	bvec optMask(3);
@@ -225,7 +190,7 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	theta.set_row(0, ssgp.getParametersVector());
 
 	//===============================================================
-	// It is critical to limit the number optimisation steps
+	// RB: It is critical to limit the number optimisation steps
 	// We don't want to reach full convergence, as the "optimal"
 	// solution is conditionned on our current estimate of the 
 	// C's and alpha's, and thus only optimal with respect to these.
@@ -241,9 +206,11 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	    gpTrainer.setOptimisationMask(optMask);
 	    
 	    gpTrainer.Train(5);
-	    gpTrainer.checkGradient();
+	    // gpTrainer.checkGradient();
 	    
 	    // Recompute basis vectors 
+	    // RB: Is there a better way to do this than the following? This
+	    // is quite expensive.
 	    ssgp.resetPosterior();
 	    ssgp.computePosterior(gaussLik);
 	    // ssgp.computePosteriorFixedActiveSet(gaussLik,iActive);
@@ -251,7 +218,7 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	    // ssgp.recomputePosterior();
 	    	    
 	    
-	        // Optimise noise parameters
+	    // Optimise noise parameters
 	    /*
 	    optMask(0) = false;
 	    optMask(1) = false;
@@ -265,37 +232,22 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	    ssgp.computePosterior(gaussLik);
 	    // ssgp.computePosteriorFixedActiveSet(gaussLik,iActive);
 	    */
-	    
+	
+	    // Store parameters at current iteration
 	    theta.set_row(i+1, ssgp.getParametersVector());
 	}
 	
 	gCmp.displayCovarianceParameters();
 	
-	// Recompute posterior using estimated parameters
-	// and smaller active set
-	// ssgp.setActiveSetSize(10);
-	// ssgp.resetPosterior();
-	// ivec iActive = to_ivec(floor(linspace(0,Xtrnmat.rows()-1,10)));
-	// ssgp.computePosteriorFixedActiveSet(gaussLik, iActive);
-	// ssgp.computePosterior(gaussLik);
-	
-	
-	
-	// Recompute posterior using estimated parameters
-	// and smaller active set
-	// ssgp.setActiveSetSize(10);
-	// ssgp.resetPosterior();
-	// ivec iActive = to_ivec(floor(linspace(0,Xtrnmat.rows()-1,10)));
-	// ssgp.computePosteriorFixedActiveSet(gaussLik, iActive);
-	// ssgp.computePosterior(gaussLik);
-	
-	// Plot after training
+	// Plot SSGP with optimised parameters
     ssgp.makePredictions(ssgpmean, ssgpvar, Xtst, g1);
 	
 	plotResults(ssgpmean, ssgpvar, gpmean, gpvar, Xtrn, Ytrn, Xtst, Ytst, ssgp);
-	plotOptLog(theta); 
 	
-	return true;	
+	// Plot parameter estimation log 
+	plotOptLog(theta);
+	
+	return true;
 }
 
 

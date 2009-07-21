@@ -77,7 +77,7 @@ int main()
     
     double range  = 0.5;                     
     double sill   = 1.0;
-    double nugget = 0.01;
+    double nugget = 0.1;
     
     // Read data in
     cout << "Loading data" << endl;
@@ -102,7 +102,7 @@ int main()
         }
     }
     
-    n_active = 100; //Y.length();
+    n_active = 150; //Y.length();
 
     // Covariance function: Gaussian + Nugget
     GaussianCF   g1(range, sill);
@@ -112,7 +112,7 @@ int main()
 
     // Initialise sequential GP
     cout << "Initialising SSGP" << endl;
-    SequentialGP ssgp(nin, 1, n_active, X, Y, gCmp);
+    SequentialGP ssgp(nin, 1, n_active, X, Y, gCmp, 1);
 
     // Gaussian observation likelihood
     GaussianLikelihood gaussLik(nugget);
@@ -122,12 +122,14 @@ int main()
     
     GreedyMaxMinDesign design;
     mat XY(X.rows(), X.cols()+1);
-    XY.set_cols(0,X);
+    XY.set_col(0,X.get_col(0));
+    XY.set_col(1,X.get_col(1));
     XY.set_col(2,Y);
-    
     
     ivec iActive = design.subsample(X, n_active);
     cout << iActive << endl;
+    
+    // return 0;
 
     // Compute posterior
     cout << "Computing posterior" << endl;
@@ -155,7 +157,7 @@ int main()
         gpTrainer.setOptimisationMask(optMask);
 
         gpTrainer.Train(5);
-        gpTrainer.checkGradient();
+        // gpTrainer.checkGradient();
         // g2.displayCovarianceParameters();
 
         // Recompute basis vectors 
@@ -175,12 +177,11 @@ int main()
         ssgp.resetPosterior();
         ssgp.computePosteriorFixedActiveSet(gaussLik,iActive);
         // ssgp.computePosterior(gaussLik);
-
     }
     
     gCmp.displayCovarianceParameters();
     
-    cout << "Making prediction" << endl;
+    cout << "Making predictions" << endl;
     ssgp.makePredictions(ssgpmean, ssgpvar, Xtst, g1);
     
     mat xActive = ssgp.getActiveSetLocations();
