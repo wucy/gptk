@@ -218,7 +218,7 @@ inline void SequentialGP::addOne(int index, const LikelihoodType& noiseModel, co
 	{
 		// h_i = Sigma*Phi_i
 		vec projectionRow = projectionP.get_row(index);
-		vec teK = KB * projectionRow;
+		vec teK = KB.transpose() * projectionRow; // added transpose for a quickfix
 		
 		// Eq. 4.19 and 4.20 in Lehel
 		vec tMe = (eye(sizeActiveSet) + (C * KB)) * projectionRow;
@@ -372,7 +372,7 @@ void SequentialGP::updateSparse(mat& KX, vec& eHat, const double gamma, const do
 	logZ(index)= logEvidence + (log(2 * pi) - log(abs(rtp1)) - (qtp1 * ratio)) / 2.0;
 	projectionP.set_row(index, eHat);
 	alphaP(index) = currentMean - ratio;
-	lambdaP(index) = rtp1 / (1.0 + (rtp1 * currentVar));
+	lambdaP(index) = -rtp1 / (1.0 + (rtp1 * currentVar));
 
 	if(!momentProjection)
 	{
@@ -439,7 +439,7 @@ void SequentialGP::updateFull(const mat& KX, vec& eHat, const double gamma, cons
 	projectionP(index, sizeActiveSet - 1) = 1;
 
 	alphaP(index) = currentMean - ratio;
-	lambdaP(index) = rtp1 / (1.0 + (rtp1 * currentVar));
+	lambdaP(index) = -rtp1 / (1.0 + (rtp1 * currentVar));
 
 }
 
