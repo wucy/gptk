@@ -218,7 +218,7 @@ inline void SequentialGP::addOne(int index, const LikelihoodType& noiseModel, co
 	{
 		// h_i = Sigma*Phi_i
 		vec projectionRow = projectionP.get_row(index);
-		vec teK = KB.transpose() * projectionRow; // added transpose for a quickfix
+		vec teK = KB * projectionRow;
 		
 		// Eq. 4.19 and 4.20 in Lehel
 		vec tMe = (eye(sizeActiveSet) + (C * KB)) * projectionRow;
