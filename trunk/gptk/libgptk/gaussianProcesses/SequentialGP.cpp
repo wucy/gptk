@@ -307,30 +307,32 @@ inline void SequentialGP::addOne(int index, const LikelihoodType& noiseModel, co
 		// REMOVE EXTRA ACTIVE POINTS
 		if(!fixActiveSet)
 		{
+
+			vec scores = scoreActivePoints(FullKL);
 			while(sizeActiveSet > maxActiveSet)
 			{
-				int removalCandidate = findLeastInformativeActivePoint(FullKL);
-				// cout << "Deleting active point " << idxActiveSet(removalCandidate) << endl;
+				int removalCandidate = min_index(scores);
+//				cout << "Deleting active point " << idxActiveSet(removalCandidate) << endl;
 				deleteActivePoint(removalCandidate);
-			}			
-		}
+				scores = scoreActivePoints(FullKL);
+			}
+      }
 
-//cout << "Geometry" << endl;
-		// REMOVE ACTIVE POINTS BASED ON GEOMETRY
-		// For stability, if variance == 0 remove associated active point 
 		while(sizeActiveSet > 0)
 		{
-			int removalCandidate = findLeastInformativeActivePoint(Geometric);
-			if(removalCandidate == -1)
+			vec scores = scoreActivePoints(Geometric);
+			int removalCandidate = min_index(scores);
+
+			if(scores(removalCandidate) >= (epsilonTolerance / 1000.0))
 			{
+//				cout << "Score: " << scores(removalCandidate);
+//				cout << "  ;  Tolerance: " << (epsilonTolerance / 1000.0) << endl;
 				break;
 			}
-			else
-			{
-				cout << "Removing point (covariance collapsed)" << endl;
-				deleteActivePoint(removalCandidate);
-			}
+//			cout << "Removing point (covariance collapsed)" << endl;
+			deleteActivePoint(removalCandidate);
 		}
+
 	}
 }
 
