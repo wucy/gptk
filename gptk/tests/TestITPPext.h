@@ -13,6 +13,8 @@ public:
 	virtual ~TestITPPext();
 	
 	static bool testTriangularPacking();
+	static bool testConcatenation();
+	static bool testNormalisation(); 
 };
 
 #endif /*TESTITPPEXT_H_*/
