@@ -65,7 +65,7 @@ public:
 	Transform* getTransform(int parameterNumber) const;
 
 	void addCovarianceFunction(CovarianceFunction& cf);
-	void displayCovarianceParameters() const;
+	void displayCovarianceParameters(int nspaces = 0) const;
 	
 private:
 	vector<CovarianceFunction *> covFunctions;
