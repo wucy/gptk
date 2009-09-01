@@ -73,7 +73,7 @@ public:
 	
 	int getNumberParameters() const;
 	
-	virtual void displayCovarianceParameters() const;
+	virtual void displayCovarianceParameters(int nspaces = 0) const;
 
 	void computeDistanceMatrix(mat& DM, const mat& X) const;
 
