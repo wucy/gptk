@@ -21,13 +21,22 @@ void CovarianceFunction::computeSymmetric(mat& C, const mat& X) const
 	assert(C.rows() == X.rows());
 	assert(C.cols() == X.rows());
 
+	if (X.rows() == 1)
+	{
+	    C.set(0, 0, computeDiagonalElement(X.get_row(1)));
+	    return;
+	}
+	
 	// calculate the lower and upper triangles
+	double d;
+	
 	for(int i=0; i<X.rows() ; i++)
 	{
 		for(int j=0; j<i; j++)
 		{
-			C.set(i, j, computeElement(X.get_row(i), X.get_row(j)));
-			C.set(j, i, computeElement(X.get_row(i), X.get_row(j)));
+		    d = computeElement(X.get_row(i), X.get_row(j));
+		    C.set(i, j, d);
+			C.set(j, i, d);
 		}
 	}
 
@@ -43,13 +52,14 @@ void CovarianceFunction::computeSymmetricGrad(vec& V, const mat& X) const
 
 }
 
+/**
+ *  Covariance between points (rows) in X1 and points in X2
+ */
 void CovarianceFunction::computeCovariance(mat& C, const mat& X1, const mat& X2) const
 {
-
 	assert(C.rows() == X1.rows());
 	assert(C.cols() == X2.rows());
 
-	// calculate the lower and upper triangles
 	for(int i=0; i<X1.rows() ; i++)
 	{
 		for(int j=0; j<X2.rows(); j++)
@@ -57,8 +67,6 @@ void CovarianceFunction::computeCovariance(mat& C, const mat& X1, const mat& X2)
 			C.set(i, j, computeElement(X1.get_row(i), X2.get_row(j)));
 		}
 	}
- 
-
 }
 
 void CovarianceFunction::computeDiagonal(mat& C, const mat& X) const
@@ -79,18 +87,25 @@ void CovarianceFunction::computeDiagonal(vec& C, const mat& X) const
 	}
 }
 
-void CovarianceFunction::displayCovarianceParameters() const
+/**
+ * Display information about current covariance function
+ * If wanted, the output can be indented by a number space characters
+ * as specified in argument.
+ */
+void CovarianceFunction::displayCovarianceParameters(int nspaces) const
 {
 	cout.setf(ios::fixed);
 	cout.precision(4);
 
-	cout << "Covariance function : " << covarianceName << endl;
+	string space = string(nspaces, ' ');
+	
+	cout << space << "Covariance function : " << covarianceName << endl;
 
 	vec t = getParameters();
 
 	for(int i=0; i < (t.size()); i++)
 	{
-		cout << getParameterName(i) << " (P" << (i) << ") : ";
+		cout << space << getParameterName(i) << " (P" << (i) << ") : ";
 		cout << (transforms[i]->backwardTransform(t(i)));
 		if(transformsApplied)
 		{
@@ -102,7 +117,7 @@ void CovarianceFunction::displayCovarianceParameters() const
 		}
 		cout << endl;
 	}
-	cout << "====================" << endl;
+	// cout << "====================" << endl;
 
 }
 
