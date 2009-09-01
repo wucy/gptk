@@ -11,6 +11,7 @@
 #include "covarianceFunctions/SumCovarianceFunction.h"
 #include "covarianceFunctions/GaussianCF.h"
 #include "covarianceFunctions/WhiteNoiseCF.h"
+#include "covarianceFunctions/ConstantCF.h"
 
 #include "optimisation/SCGModelTrainer.h"
 #include "optimisation/CGModelTrainer.h"
