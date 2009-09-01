@@ -25,15 +25,15 @@ void TestSequentialGP::loadNoisySineData(vec &Xtrn, vec &Ytrn, vec &Xtst, vec &Y
 	mat M;
 	csvstream csv;
 
-	csv.read(M, "noisy_sine_tst.csv");            	// Test set
+	csv.read(M, "data/noisy_sine_tst.csv");            	// Test set
 	Xtst = M.get_col(0);
 	Ytst = M.get_col(1);
 
-	csv.read(M, "noisy_sine_trn.csv");			  	// Training set
+	csv.read(M, "data/noisy_sine_trn.csv");			  	// Training set
 	Xtrn = M.get_col(0);		
 	Ytrn = M.get_col(1);
 
-	csv.read(M, "noisy_sine_gp.csv");				// GP prediction
+	csv.read(M, "data/noisy_sine_gp.csv");				// GP prediction
 	gpmean = M.get_col(0);
 	gpvar  = M.get_col(1);
 
@@ -125,8 +125,9 @@ bool TestSequentialGP::testNoisySineFixedParams()
 	
 	plotResults(ssgpmean, ssgpvar, gpmean, gpvar, Xtrn, Ytrn, Xtst, Ytst, ssgp);	
 	
-	return false;	
+	return false;
 }
+
 
 /** -----------------------------------------------------------------------------------------------------
  * Compares SSGP with standard GP on noisy sine data. Parameters
@@ -163,9 +164,8 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	GaussianLikelihood gaussLik(nugget);
 
 	// Use Maximin design
-	// ivec iActive = to_ivec(floor(linspace(0,Xtrnmat.rows()-1,n_active)));
 	// MaxMinDesign design(100);
-	// ivec iActive = design.subsample(Xtrnmat, Ytrn, n_active);
+	// ivec iActive = design.subsample(concat_cols(Xtrnmat, Ytrn), n_active);
 
 	// ssgp.computePosteriorFixedActiveSet(gaussLik, iActive);
 	ssgp.computePosterior(gaussLik);
@@ -185,7 +185,7 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	
 	bvec optMask(3);
 	
-	int niter = 10;
+	int niter = 5;
 	mat theta = zeros(niter+1,3);
 	theta.set_row(0, ssgp.getParametersVector());
 
@@ -202,11 +202,22 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	    // Optimise covariance parameters 
 	    optMask(0) = true;
 	    optMask(1) = true;
-	    optMask(2) = false;
+	    optMask(2) = true;
 	    gpTrainer.setOptimisationMask(optMask);
 	    
 	    gpTrainer.Train(5);
 	    // gpTrainer.checkGradient();
+	    
+	    /*
+	    // Optimise noise parameters
+	    optMask(0) = false;
+	    optMask(1) = false;
+	    optMask(2) = true;
+	    gpTrainer.setOptimisationMask(optMask);
+	    gpTrainer.Train(5);
+	    // gpTrainer.checkGradient();
+	    // g2.displayCovarianceParameters();
+	    */
 	    
 	    // Recompute basis vectors 
 	    // RB: Is there a better way to do this than the following? This
@@ -216,22 +227,7 @@ bool TestSequentialGP::testNoisySineLearnParams()
 	    // ssgp.computePosteriorFixedActiveSet(gaussLik,iActive);
 	    // ssgp.recomputePosteriorFixedActiveSet(gaussLik);
 	    // ssgp.recomputePosterior();
-	    	    
-	    
-	    // Optimise noise parameters
-	    /*
-	    optMask(0) = false;
-	    optMask(1) = false;
-	    optMask(2) = true;
-	    gpTrainer.setOptimisationMask(optMask);
-	    gpTrainer.Train(5);
-	    gpTrainer.checkGradient();
-	    // g2.displayCovarianceParameters();
 
-	    ssgp.resetPosterior();
-	    ssgp.computePosterior(gaussLik);
-	    // ssgp.computePosteriorFixedActiveSet(gaussLik,iActive);
-	    */
 	
 	    // Store parameters at current iteration
 	    theta.set_row(i+1, ssgp.getParametersVector());
