@@ -52,13 +52,15 @@ inline double SumCovarianceFunction::computeDiagonalElement(const vec& A) const
 	return k;
 }
 
-void SumCovarianceFunction::displayCovarianceParameters() const
+void SumCovarianceFunction::displayCovarianceParameters(int nspaces) const
 {
-	cout << "Covariance function : Sum" << endl;
+	string space(nspaces, ' ');
+	
+    cout << space << "Covariance function : Sum" << endl;
 	for(std::vector<CovarianceFunction *>::size_type i = 0; i < covFunctions.size(); i++)
 	{
-		cout << "--- Component: " << (i+1) << endl;
-		covFunctions[i]->displayCovarianceParameters();
+		cout << space << "+ Component: " << (i+1) << endl;
+		covFunctions[i]->displayCovarianceParameters(nspaces+2);
 	}
 }
 
