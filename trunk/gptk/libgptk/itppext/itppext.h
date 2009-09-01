@@ -11,6 +11,7 @@
 #include <itpp/itstat.h>
 
 using namespace itpp;
+using namespace std;
 
 namespace itppext 
 {
@@ -25,6 +26,18 @@ double cond(mat M, int p=2); // Condition number for matrix p-norm (1 or 2)
 ivec randperm(int n);  // Random permutation of numbers between 0 and N-1
 
 vec min(vec u, vec v); // Minimum elements from 2 vectors of equal length 
+
+mat concat_cols(mat X, vec y); // Concatenate matrix and vector 
+mat concat_cols(mat X, mat Y); // Concatenate matrix and matrix
+
+vec mean_rows(mat X);  // vector of column means
+vec mean_cols(mat X);  // vector of row means
+mat cov(mat X, vec &xmean); // covariance of rows, also returns the mean
+mat cov(mat X); // covariance of rows
+
+void normalise(mat &X);
+void normalise(mat &X, vec &mean, vec &covdiag);
+void denormalise(mat &X, vec mean, vec covdiag);
 
 } // END OF NAMESPACE ITPPEXT
 

@@ -59,7 +59,7 @@ vec utr_vec(mat M)
 mat ltr_mat(vec v)
 {
     // Retrieve dimension of matrix
-    int N =  floor(sqrt(2*v.length()));
+    int N =  (int) floor(sqrt(2*v.length()));
     
     assert(N*(N+1)/2 = v.length());
     
@@ -84,7 +84,7 @@ mat ltr_mat(vec v)
 mat utr_mat(vec v)
 {
     // Retrieve dimension of matrix
-    int N =  floor(sqrt(2*v.length()));
+    int N =  (int) floor(sqrt(2*v.length()));
     
     assert(N*(N+1)/2 = v.length());
     
@@ -128,6 +128,137 @@ vec min(vec u, vec v)
     
     return z;
 }
+
+/**
+ * Concatenation Z = [X y]
+ */
+mat concat_cols(mat X, vec y) {
+    assert(X.rows()==y.rows());
+    
+    mat Z(X.rows(), X.cols()+1);
+    
+    for (int i=0; i<X.cols(); i++) Z.set_col(i, X.get_col(i));
+    Z.set_col(X.cols(), y);
+    
+    return Z;
+}
+
+/**
+ * Concatenation Z = [X Y]
+ */
+mat concat_cols(mat X, mat Y) {
+    assert(X.rows()==Y.rows());
+    
+    mat Z(X.rows(), X.cols()+Y.cols());
+    
+    for (int i=0; i<X.cols(); i++) Z.set_col(i, X.get_col(i));
+    for (int i=X.cols(); i<X.cols()+Y.cols(); i++) Z.set_col(i, Y.get_col(i));
+    
+    return Z;
+}
+
+/**
+ * Empirical arithmetic mean along rows
+ */
+vec mean_rows(mat X)
+{
+    int D = X.cols();
+    
+    vec m(D);
+    for (int i=0; i<D; i++) m(i) = mean(X.get_col(i));
+    return m;
+}
+
+/**
+ * Empirical arithmetic mean along columns
+ */
+vec mean_cols(mat X)
+{
+    int N = X.rows();
+    
+    vec m(N);
+    for (int i=0; i<N; i++) m(i) = mean(X.get_row(i));
+    return m;
+}
+
+
+/**
+ * Unbiased empirical covariance
+ */
+mat cov(mat X, vec &xmean)
+{
+    int N = X.rows();
+
+    mat matxmean = mat(1,X.cols());
+    matxmean.set_row(0, mean_rows(X));
+
+    mat Xcentred = X-repmat(matxmean, N, 1);
+    
+    mat C = 1.0/(N-1) * Xcentred.transpose() * Xcentred;
+    
+    xmean = matxmean.get_row(0);
+    return C;
+}
+
+mat cov(mat X)
+{
+    mat C;
+    vec xmean;
+    C = cov(X, xmean);
+    return C;
+}
+
+/**
+ * Normalises a data set comprising a set of inputs X and a set of outputs y.
+ * The X and y arguments are overridden by their normalised versions. 
+ * The mean and covariance of the original dataset are also returned.
+ */
+void normalise(mat &X, vec &Xmean, vec &Xcovdiag) 
+{
+    int N = X.rows();
+    int D = X.cols(); 
+    
+    Xcovdiag  = diag(cov(X,Xmean));
+    
+    mat matXmean(1,D);
+    
+    matXmean.set_row(0, Xmean);
+    
+    mat Xcentred = X - repmat(matXmean, N, 1);
+    mat Xsphered(N,D);
+    
+    for (int i=0; i<D; i++)
+        Xsphered.set_col( i, 1.0/sqrt(Xcovdiag(i)) * Xcentred.get_col(i) );
+    
+    X = Xsphered;
+}
+
+void normalise(mat &X) 
+{ 
+    vec Xmean;
+    vec Xcovdiag;
+    normalise(X, Xmean, Xcovdiag);
+}
+
+void denormalise(mat &X, vec Xmean, vec Xcovdiag)
+{
+    int N = X.rows();
+    int D = X.cols(); 
+
+    mat matXmean(1,D);
+    matXmean.set_row(0, Xmean);
+
+    // Rescale
+    mat Xdesphered(N,D);
+    for (int i=0; i<D; i++)
+        Xdesphered.set_col(i,sqrt(Xcovdiag(i))*X.get_col(i));
+    
+    // Add bias
+    mat Xdecentred = Xdesphered + repmat(matXmean, N, 1);
+    
+    X = Xdecentred;    
+}
+
 
 } // END OF NAMESPACE ITPPEXT
 
