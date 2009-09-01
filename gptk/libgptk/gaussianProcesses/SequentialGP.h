@@ -36,7 +36,7 @@
 #include "../covarianceFunctions/CovarianceFunction.h"
 #include "../likelihoodModels/LikelihoodType.h"
 #include "../likelihoodModels/GaussianSampLikelihood.h"
-#include "itppext/itppext.h"
+// #include "itppext/itppext.h"
 
 #include <cassert>
 
@@ -102,6 +102,11 @@ public:
 private:
 
 	inline void addOne(int index, const LikelihoodType& noiseModel, const bool fixActiveSet);
+	void addOne_siteRemoval(int index);
+	void addOne_cavity(double sig0, double &mu, double &sigx, mat &KX, mat& Xmat);
+	void addOne_updateGammaEhat(double &gamma, vec &eHat, const double sig0, const mat KX);
+	void addOne_removeExtraPoints(const bool fixActiveSet);
+	void addOne_removeCollapsedPoints();
 
 	void updateSparse(mat& KX, vec& eHat, const double gamma, const double qtp1, const double rtp1, const double currentMean, const double currentVar, const double logEvidence, const int index);
 	void updateFull(const mat& KX, vec& eHat, const double gamma, const double qtp1, const double rtp1, const double sig0, const double currentMean, const double currentVar, const double logEvidence, const int index);
@@ -141,15 +146,12 @@ private:
 
 	int sizeActiveSet;
 	int maxActiveSet;
-	int sizeActiveSetOld;
+	// int sizeActiveSetOld;
 	double epsilonTolerance;
 	bool momentProjection;
 	int iterChanging;
 	int iterFixed;
 	
-	// If this is set to true, the locations already in the active set
-	// will not be added+deleted again.
-	bool selectiveSweep;
 
 	LikelihoodCalculation likelihoodType;
 };
