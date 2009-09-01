@@ -120,13 +120,11 @@ void SCGModelTrainer::Train(int numIterations){
 		    //delta = oldbeta*kappa - olddelta;
 		}
 		alpha = - ( mu / delta );
-		//cout << "  alpha = " << alpha << endl;
-		//cout << "  d = " << direction << endl;
 		xNew = x + (alpha * direction);
-		cout << "  xNew = " << xNew << endl; 
+		// cout << "  xNew = " << xNew << endl; 
 
 		fNew = errorFunction(xNew);
-		cout << "  fNew = " << fNew << endl;
+		// cout << "  fNew = " << fNew << endl;
 
 		Delta = 2.0 * ( fNew - fOld ) / (alpha * mu);
 		if ( Delta >= 0.0 )
@@ -134,8 +132,8 @@ void SCGModelTrainer::Train(int numIterations){
 			success = true;
 			numSuccess++;
 			x = xNew;
-			// RB: DO NOT SET PARAMETERS HERE!!
-			// setParameters(x);
+			// RB: Do we need to set parameters here?
+			setParameters(x);
 			fNow = fNew;
 		}
 		else
