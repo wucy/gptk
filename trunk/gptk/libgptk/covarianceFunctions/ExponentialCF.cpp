@@ -38,7 +38,7 @@ inline double ExponentialCF::computeDiagonalElement(const vec& A) const
 
 inline double ExponentialCF::calcExponential(const vec& V) const
 {
-	return variance * exp( -sqrt(sum(pow(V, 2.0))) / (2*range));
+	return variance * exp( -sqrt(sum(pow(V, 2.0))) / (2.0*range));
 }
 
 inline double ExponentialCF::calcExponentialDiag() const
