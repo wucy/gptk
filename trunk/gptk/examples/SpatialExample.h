@@ -30,6 +30,8 @@ using namespace itpp;
 enum ParameterEstimationMethod { PARAM_ESTIM_GP, PARAM_ESTIM_PSGP, PARAM_ESTIM_NO_ESTIMATION, 
                                   PARAM_ESTIM_CUSTOM };
 
+enum PredictionType { PREDICTION_FULL, PREDICTION_CHUNKS };
+
 class SpatialExample
 {
     
@@ -55,8 +57,8 @@ public:
 	void setNumberOuterLoops(int value);
 	void setParameterEstimationMethod(ParameterEstimationMethod method);
 
-
 	// PREDICTION
+    void setPredictionType(PredictionType type);
 	void setPredictionLocations(mat Xpred);
 	bool makePredictions();
 	
@@ -110,6 +112,13 @@ protected:
     bool learnParametersGP();
     bool learnParametersPSGP();
     bool learnParametersCustom();
+    
+    // PREDICTION
+    PredictionType predictionType;   // Whether we predict at all locations at once or split
+                                     // the domain into chunks first
+    long predictionChunkSize;        // Size of prediction chunks (number of locations)
+    bool makePredictionsFull(SequentialGP &psgp);
+    bool makePredictionsChunks(SequentialGP &psgp);
     
 };
 
