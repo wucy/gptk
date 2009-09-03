@@ -29,6 +29,9 @@ void SpatialExample::setDefaults()
     n_active = 400;           // Number of active points (max)
     n_sweeps = 4;             // Number of sweeps through data (PSGP)
     n_outer_loops = 5;        // Number of outer loops (PSGP parameters estimation)
+    
+    predictionType = PREDICTION_CHUNKS;  // Split prediction domain by default
+    predictionChunkSize = 1000;         // Default size for prediction chunks
 }
 
 
@@ -95,6 +98,16 @@ void SpatialExample::setPredictionLocations(mat _Xpred)
 void SpatialExample::setParameterEstimationMethod(ParameterEstimationMethod method)
 {
     paramEstimationMethod = method;
+}
+
+/**
+ * Set prediction type: 
+ *   PREDICTION_FULL: single prediction at all locations
+ *   PREDICTION_CHUNKS: sequential prediction at subsets of locations  
+ */
+void SpatialExample::setPredictionType(PredictionType type) 
+{
+    predictionType = type; 
 }
 
 /**
@@ -333,6 +346,10 @@ bool SpatialExample::makePredictions()
     // default to uniform grid on observed area.
     if (!isSetPredictionLocations) uniformGrid(X, Xpred);
         
+    // Reinitialise predictive mean and variance
+    ypred = zeros(Xpred.rows());
+    vpred = zeros(Xpred.rows());
+    
     // Gaussian Likelihood function
     // TODO: Make this generic so can be set to something else
     likFunction = new GaussianLikelihood(nugget);
@@ -345,12 +362,97 @@ bool SpatialExample::makePredictions()
     cout << "  Compute posterior" << endl;
     psgp.computePosterior(*likFunction);
     
-    cout << "  Predict at " << Xpred.rows() << " locations" << endl;
-    psgp.makePredictions(ypred, vpred, Xpred, *kernelCF);
+    bool predictionError = false;
+    
+    switch (predictionType) {
+    case PREDICTION_FULL:
+        predictionError = makePredictionsFull(psgp);
+        break;
+        
+    case PREDICTION_CHUNKS:
+        predictionError = makePredictionsChunks(psgp);
+        break;
+        
+    default: 
+        cerr << "Unknown prediction type" << endl;
+        return true;
+    }
+    
+    // Make sure everything went fine
+    if (predictionError) {
+        cerr << "An error occurred during prediction." << endl;
+        cerr << "Results might not be correct." << endl;
+        return true;
+    }
     
     return false;
 }
 
+
+/**
+ * Predict at all specified locations at once
+ */
+bool SpatialExample::makePredictionsFull(SequentialGP &psgp) 
+{
+    cout << "  Predict at " << Xpred.rows() << " locations" << endl;
+    psgp.makePredictions(ypred, vpred, Xpred, *kernelCF);
+
+    return false;
+}
+
+
+/**
+ * Limited memory prediciton - the prediction domain is split
+ * into chunks of predefined size and prediction is made at each
+ * chunk sequentially.
+ */
+bool SpatialExample::makePredictionsChunks(SequentialGP &psgp) 
+{
+    int chunkStart = 0;                        
+    int chunkSize  = predictionChunkSize;
+    int chunkEnd   = chunkSize - 1;
+
+    int numPred = Xpred.rows();
+    
+    // Adjust chunk size if default chunk bigger than preduction domain
+    if(chunkEnd >= numPred)
+    {
+        chunkEnd = numPred - 1;
+        chunkSize = chunkEnd - chunkStart + 1;
+    }
+
+    // Predict at each chunk
+    while(chunkStart < numPred)
+    {
+        cout << "  Predicting from locations " << chunkStart+1 << " to " << chunkEnd+1 << endl;
+
+        // Extract chunk
+        mat XpredChunk = Xpred.get_rows(chunkStart, chunkEnd);
+
+        // Predict at chunk
+        vec predYChunk(chunkSize);
+        vec predVarChunk(chunkSize);
+
+        psgp.makePredictions(predYChunk, predVarChunk, XpredChunk, *kernelCF);
+
+        ypred.replace_mid(chunkStart, predYChunk);
+        vpred.replace_mid(chunkStart, predVarChunk);
+
+        // Move to next chunk
+        chunkStart = chunkEnd + 1;
+        chunkEnd +=  chunkSize;
+
+        // Adjust chunk size if taking us beyond the total number of predictive 
+        // locations (typically, when last chunk is smaller than the others)
+        if(chunkEnd >= numPred)
+        {
+            chunkEnd = numPred - 1;
+            chunkSize = chunkEnd - chunkStart + 1;
+        }
+    }
+    
+    return false;
+}
 
 /**
  * Given a set of locations X, determine a rectangle uniform grid covering
@@ -421,6 +523,10 @@ void SpatialExample::uniformGrid(mat X, mat &grid)
 }
 
 
+
+/*
+ * Save prediction results to file
+ */
 bool SpatialExample::saveResults(string filename)
 {
     csvstream csv;
@@ -490,7 +596,7 @@ int main(int argc, char* argv[])
         {
             ex.setParameterEstimationMethod(PARAM_ESTIM_PSGP);
             ex.setNumberSweeps(1);
-            ex.setNumberOuterLoops(5);
+            ex.setNumberOuterLoops(1);
             ex.setNumberOptimIterations(5);
             
             long starttime = clock();
