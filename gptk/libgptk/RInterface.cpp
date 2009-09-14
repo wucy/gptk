@@ -27,8 +27,9 @@ extern "C" {
         char **metaDataTable;
 
         int metadataSize = length(metaData);
-
-
+        // The metadata table, if provided, is terminated by an empty line
+        // Need to remove it form the size
+        if (metadataSize > 0) metadataSize -= 1;
 
         // there must be a more obvious way to get the dimensions of a matrix?
         xDataLen = length(xData) / 2;
@@ -57,6 +58,10 @@ extern "C" {
         errorPtr = INTEGER(errorIdx);
         sensorPtr= INTEGER(sensorIdx);
 
+        // If metadata is specified, it should have one likelihood model per
+        // observation
+        assert(metadataSize == 0 || metadataSize == xDataLen);
+        
         // we need to make a table of pointers to the sensor model strings
         metaDataTable = (char**)calloc(metadataSize, sizeof(char *));
 
@@ -94,7 +99,10 @@ extern "C" {
         char **metaDataTable;
 
         int metadataSize = length(metaData);
-
+        // The metadata table, if provided, is terminated by an empty line
+        // Need to remove it form the size
+        if (metadataSize > 0) metadataSize -= 1;
+        
         // there must be a more obvious way to get the dimensions of a matrix?
         xDataLen = length(xData) / 2;
         eDataLen = length(eData);
@@ -105,6 +113,14 @@ extern "C" {
         errorPtr = INTEGER(errorIdx);
         sensorPtr= INTEGER(sensorIdx);
 
+        // Check that all data arrays are coherent 
+        assert(xDataLen == length(yData));
+        assert(xDataLen == eDataLen);
+        
+        // If metadata is specified, it should have one likelihood model per
+        // observation
+        assert(metadataSize == 0 || metadataSize == xDataLen);
+                
         // we need to make a table of pointers to the sensor model strings
         metaDataTable = (char**)calloc(metadataSize, sizeof(char *));
 
