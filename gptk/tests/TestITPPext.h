@@ -14,7 +14,8 @@ public:
 	
 	static bool testTriangularPacking();
 	static bool testConcatenation();
-	static bool testNormalisation(); 
+	static bool testNormalisation();
+	static bool testTokenise();
 };
 
 #endif /*TESTITPPEXT_H_*/
