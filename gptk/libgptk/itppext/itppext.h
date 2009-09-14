@@ -4,11 +4,13 @@
 /**
  * Extension to IT++ library
  */
-
+#include <vector>
+#include <string>
 #include <cassert>
 #include <math.h>
 #include <itpp/itbase.h>
 #include <itpp/itstat.h>
+
 
 using namespace itpp;
 using namespace std;
@@ -38,6 +40,8 @@ mat cov(mat X); // covariance of rows
 void normalise(mat &X);
 void normalise(mat &X, vec &mean, vec &covdiag);
 void denormalise(mat &X, vec mean, vec covdiag);
+
+void tokenise(const string& str, vector<string>& tokens, const string& delimiters = " ", int stopAfter=0);
 
 } // END OF NAMESPACE ITPPEXT
 
