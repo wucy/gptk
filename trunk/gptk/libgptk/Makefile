@@ -22,6 +22,7 @@ OBJS =		    covarianceFunctions/GaussianCF.o \
 				covarianceFunctions/LogTransform.o \
 				covarianceFunctions/NegLogSigmoidTransform.o \
 				covarianceFunctions/SigmoidTransform.o \
+				covarianceFunctions/Matern3CF.o \
 				likelihoodModels/LikelihoodType.o \
 				likelihoodModels/AnalyticLikelihood.o \
 				likelihoodModels/GaussianLikelihood.o \
@@ -39,27 +40,47 @@ OBJS =		    covarianceFunctions/GaussianCF.o \
 				optimisation/CGModelTrainer.o \
 				GraphPlotter/GraphPlotter.o \
 				gaussianProcesses/GaussianProcess.o \
-				gaussianProcesses/SequentialGP.o \
 				gaussianProcesses/ForwardModel.o \
 				io/csvstream.o \
 				itppext/itppext.o \
 				design/MinMaxDesign.o \
 				design/MaxMinDesign.o \
-				design/GreedyMaxMinDesign.o
+				design/GreedyMaxMinDesign.o \
+				gaussianProcesses/PSGP.o \
+				gaussianProcesses/SequentialGP.o
 
 .cpp.o: 
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@	
 
 all: libgptk
 
-libgptk: $(OBJS)	
-# 	Compile shared library 
-	gcc -shared -Wl,-soname,$(LIBRARY).so -o $(LIBRARY_PATH)/$(LIBRARY).so.$(VERSION) $(OBJS) $(LIBS)
+libgptk: $(OBJS)
+	# 	Compile shared library 
+	gcc -shared -pg -Wl,-soname,$(LIBRARY).so -o $(LIBRARY_PATH)/$(LIBRARY).so.$(VERSION) $(OBJS) $(LIBS)
+
 #   Remove symbolic link if existing
 	if [[ -f $(LIBRARY_PATH)/$(LIBRARY).so ]]; then rm $(LIBRARY_PATH)/$(LIBRARY).so; fi
+
 #   Create symbolic link to library
 	ln -s $(LIBRARY_PATH)/$(LIBRARY).so.$(VERSION) $(LIBRARY_PATH)/$(LIBRARY).so
 	@echo "** Library successfully built."
+
+
+#
+# R PACKAGE - DOES NOT BUILD LIBRARY, BUT INCLUDES R INTERFACE
+#
+CXXFLAGS_R = -I/usr/share/R/include -DUSING_R=1 -O3
+
+rpackage: astonGeostats.o RInterface.o
+
+RInterface.o: RInterface.cpp 
+	$(CXX) $(CXXFLAGS) $(CXXFLAGS_R) $(INCLUDES) -c RInterface.cpp -o RInterface.o 
+
+
+astonGeostats.o: astonGeostats.cpp astonGeostats.h
+	$(CXX) $(CXXFLAGS) $(CXXFLAGS_R) $(INCLUDES) -c astonGeostats.cpp -o astonGeostats.o 
+
+
 
 clean:
 	rm -f $(OBJS)
