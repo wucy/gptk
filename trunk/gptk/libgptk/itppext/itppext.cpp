@@ -61,7 +61,7 @@ mat ltr_mat(vec v)
     // Retrieve dimension of matrix
     int N =  (int) floor(sqrt(2*v.length()));
     
-    assert(N*(N+1)/2 = v.length());
+    assert(N*(N+1)/2 == v.length());
     
     mat M = zeros(N,N);
     int k = 0;
@@ -86,7 +86,7 @@ mat utr_mat(vec v)
     // Retrieve dimension of matrix
     int N =  (int) floor(sqrt(2*v.length()));
     
-    assert(N*(N+1)/2 = v.length());
+    assert(N*(N+1)/2 == v.length());
     
     mat M = zeros(N,N);
     int k = 0;
@@ -133,7 +133,7 @@ vec min(vec u, vec v)
  * Concatenation Z = [X y]
  */
 mat concat_cols(mat X, vec y) {
-    assert(X.rows()==y.rows());
+    assert(X.rows()==y.length());
     
     mat Z(X.rows(), X.cols()+1);
     
@@ -260,6 +260,43 @@ void denormalise(mat &X, vec Xmean, vec Xcovdiag)
 }
 
 
+/**
+ * String tokeniser - split a string into a vector of substring identified
+ * by a delimiter (space by default). Optionally, stop after a certain number
+ * of tokens has been found and return the rest of the string as the last token
+ * 
+ * Adapted from: http://oopweb.com/CPP/Documents/CPPHOWTO/Volume/C++Programming-HOWTO-7.html
+ */
+void tokenise(const string& str, vector<string>& tokens, const string& delimiters, int stopAfter)
+{
+    // by default, do not stop after a given number of tokens (i.e. process 
+    // the whole string)
+    if (stopAfter == 0) stopAfter = str.length()+1; 
+    
+    // Find start and end of first token
+    string::size_type tokenStart = str.find_first_not_of(delimiters, 0);       // First char
+    string::size_type tokenEnd = str.find_first_of(delimiters, tokenStart);    // Following delimiter
+
+    while ((string::npos != tokenEnd || string::npos != tokenStart) && tokens.size() < stopAfter)
+    {
+        // Found a token, add it to the vector.
+        tokens.push_back(str.substr(tokenStart, tokenEnd - tokenStart));
+        
+        // Move to next token 
+        tokenStart = str.find_first_not_of(delimiters, tokenEnd);
+        tokenEnd   = str.find_first_of(delimiters, tokenStart);
+    }
+    
+    // If we have stopped after a given number of tokens, add the rest of the
+    // string as a final token 
+    if (tokens.size() == stopAfter) {
+        tokens.push_back(str.substr(tokenStart));
+    }
+}
+
+
 } // END OF NAMESPACE ITPPEXT
+
+
 
 
