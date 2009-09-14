@@ -45,6 +45,7 @@ vec QuadraticError::getParametersVector() const
 	return params;
 }
 
+
 void QuadraticError::setParametersVector(const vec p)
 {
 	x = p(0);
@@ -54,7 +55,8 @@ void QuadraticError::setParametersVector(const vec p)
 TestOptimisationSCG::TestOptimisationSCG() {
 	header = "Test for class SequentialGP";
 
-	addTest(&testQuadraticError, "Quadratic error function");
+	// addTest(&testQuadraticError, "Quadratic error function");
+	addTest(&testRosenbrock, "Rosenbrock function");
 
 }
 
@@ -71,6 +73,24 @@ bool TestOptimisationSCG::testQuadraticError()
 	return (params(0) - 3.2 < 1e-4) && (params(1) - 3.2 < 1e-4);
 }
 
+
+bool TestOptimisationSCG::testRosenbrock()
+{
+    int iterations = 100;
+    cout.setf(ios::fixed);
+    cout.precision(4);
+    Rosenbrock rosen(-1.0, 1.0);
+    vec startingValue = rosen.getParametersVector();
+    SCGModelTrainer scgTrainer(rosen);
+    rosen.setParametersVector(startingValue);
+    cout << "Scaled Conjugate Gradient" << endl;
+    scgTrainer.setAnalyticGradients(true);
+    scgTrainer.Train(iterations);
+    scgTrainer.Summary();
+    vec finalParams = rosen.getParametersVector();
+    cout << "Final Parameters: " << finalParams << endl << endl;
+    return (abs(finalParams(0)-1.0) < 1e-4 && abs(finalParams(1)-1.0 < 1e-4));
+}
 
 int main() {
 	TestOptimisationSCG test;

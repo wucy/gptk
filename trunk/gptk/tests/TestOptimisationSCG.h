@@ -12,6 +12,7 @@
 #include "optimisation/Optimisable.h"
 #include "optimisation/SCGModelTrainer.h"
 #include <cassert>
+#include "../examples/Rosenbrock.h"
 
 class QuadraticError : public Optimisable
 {
@@ -36,6 +37,7 @@ public:
 	virtual ~TestOptimisationSCG();
 
 	static bool testQuadraticError();
+	static bool testRosenbrock();
 };
 
 #endif /* TESTOPTIMISATIONSCG_H_ */
