@@ -166,6 +166,7 @@ vec ModelTrainer::getParameters()
     // It is probably safer to return all parameters and simply set 
     // the gradient of the non-masked ones to zero, rather than extracting
     // subsets of the parameters.
+    /*
     if(maskSet)
 	{
 		vec p = model.getParametersVector();
@@ -181,6 +182,7 @@ vec ModelTrainer::getParameters()
 		return maskedParameters;
 	}
 	else
+	*/
 	{
 		return model.getParametersVector();
 	}
