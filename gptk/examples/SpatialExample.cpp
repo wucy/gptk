@@ -24,7 +24,7 @@ void SpatialExample::setDefaults()
     defaultNuggetRatio = 0.1;       // Nugget to Variance (sill) ratio
     
     paramEstimationMethod = PARAM_ESTIM_GP;   // Use GP to estimate parameters
-    n_optim_iterations = 50;        // Number of iterations in parameter estimation
+    n_optim_iterations = 5;        // Number of iterations in parameter estimation
     
     n_active = 400;           // Number of active points (max)
     n_sweeps = 4;             // Number of sweeps through data (PSGP)
@@ -133,16 +133,9 @@ bool SpatialExample::loadData(string filename)
         return true;
     }
     
-    // M.set_size(600,M.cols(),true);
-    
     if (M.cols() < 3 || M.cols() > 4) {
         cerr << "Invalid number of columns. Data file should have 3 or 4 columns." << endl;
         return true;
-    }
-    
-    // Normalise (if required)
-    if (normaliseData) {
-        itppext::normalise(M, Mmean, Mcovdiag);
     }
     
     // Extract locations and observations 
@@ -152,6 +145,11 @@ bool SpatialExample::loadData(string filename)
     X.set_col(0,M.get_col(0));
     X.set_col(1,M.get_col(1));
     y = M.get_col(2);
+    
+    // Normalise (if required)
+    if (normaliseData) {
+        itppext::normalise(X, Xmean, Xcovdiag);
+    }
     
     // Observation noise 
     if (M.cols() == 4) {            // Observation noise provided
@@ -242,12 +240,22 @@ bool SpatialExample::learnParameters()
     {
     case PARAM_ESTIM_GP:
         // Estimate parameters using GP
+        cout << "Parameter estimation using full GP" << endl;
         return learnParametersGP();
     
     case PARAM_ESTIM_PSGP:
         // Estimate parameters using PSGP
+        cout << "Parameter estimation using PSGP" << endl;
         return learnParametersPSGP();
     
+    case PARAM_ESTIM_GP_PSGP:
+        // Estimate parameters using GP fist for a good first
+        // guess, then PSGP
+        cout << "Parameter estimation using GP (first guess) then PSGP" << endl;
+        learnParametersGP();
+        covFunc->displayCovarianceParameters();
+        return learnParametersPSGP();
+        
     case PARAM_ESTIM_CUSTOM:
         // Estimate parameters using custom method
         // Requires overloading of learnParametersCustom()
@@ -276,7 +284,7 @@ bool SpatialExample::learnParametersGP()
 
     gpTrainer.setAnalyticGradients(true);
     gpTrainer.setCheckGradient(true);
-    gpTrainer.Train(n_optim_iterations);
+    gpTrainer.Train(n_optim_iterations*5);
     
     return false;
 }
@@ -297,22 +305,32 @@ bool SpatialExample::learnParametersPSGP()
     // PSGP for prediction
     n_active = min(n_active, X.rows()); // Do not exceed number of obs.
         
-    SequentialGP psgp(2, 1, n_active, X, y, *covFunc, n_sweeps);
+    // SequentialGP psgp(2, 1, n_active, X, y, *covFunc, n_sweeps);
+    PSGP psgp(X, y, *covFunc, n_active, 1, n_sweeps);
         
     cout << "  Compute posterior" << endl;
-    psgp.computePosterior(*likFunction);
+    if (observedNoise) {
+        // TODO: likelihood model for case with observation error
+        // psgp.computePosterior(*likFunctionVector);
+    }
+    else {
+        psgp.computePosterior(*likFunction);    
+    }
+    cout << "  " << psgp.getSizeActiveSet() << " active points needed." << endl;
     
     SCGModelTrainer gpTrainer(psgp);
-    psgp.setLikelihoodType(UpperBound);
+    psgp.setLikelihoodType(Approximate);
 
+    gpTrainer.setAnalyticGradients(true);
     gpTrainer.setCheckGradient(true);
 
     for (int i=0; i<n_outer_loops; i++) 
     {
         cout << endl << endl << "-- " << i+1 << "/" << n_outer_loops << endl;
         gpTrainer.Train(n_optim_iterations);
-        psgp.resetPosterior();
-        psgp.computePosterior(*likFunction);
+        // psgp.resetPosterior();
+        // psgp.computePosterior(*likFunction);
+        psgp.recomputePosterior();
     }
     return false;
 }
@@ -335,7 +353,6 @@ void SpatialExample::displayCurrentOptions()
     cout << endl << "Current options:" << endl;
     cout << "  Using normalised data: " << normaliseData << endl;
     cout << "  Observation noise provided: " << observedNoise << endl;
-    cout << "  Using " << n_active << " active points / " << X.rows() << " observations" << endl;
     covFunc->displayCovarianceParameters(2);
     cout << endl;
 }
@@ -357,7 +374,8 @@ bool SpatialExample::makePredictions()
     // PSGP for prediction
     n_active = min(n_active, X.rows()); // Do not exceed number of obs.
     
-    SequentialGP psgp(2, 1, n_active, X, y, *covFunc, n_sweeps);
+    // SequentialGP psgp(2, 1, n_active, X, y, *covFunc, n_sweeps);
+    PSGP psgp(X, y, *covFunc, n_active, 1, n_sweeps);
     
     cout << "  Compute posterior" << endl;
     psgp.computePosterior(*likFunction);
@@ -392,7 +410,7 @@ bool SpatialExample::makePredictions()
 /**
  * Predict at all specified locations at once
  */
-bool SpatialExample::makePredictionsFull(SequentialGP &psgp) 
+bool SpatialExample::makePredictionsFull(PSGP &psgp) 
 {
     cout << "  Predict at " << Xpred.rows() << " locations" << endl;
     psgp.makePredictions(ypred, vpred, Xpred, *kernelCF);
@@ -406,7 +424,7 @@ bool SpatialExample::makePredictionsFull(SequentialGP &psgp)
  * into chunks of predefined size and prediction is made at each
  * chunk sequentially.
  */
-bool SpatialExample::makePredictionsChunks(SequentialGP &psgp) 
+bool SpatialExample::makePredictionsChunks(PSGP &psgp) 
 {
     int chunkStart = 0;                        
     int chunkSize  = predictionChunkSize;
@@ -500,8 +518,11 @@ void SpatialExample::uniformGrid(mat X, mat &grid)
         grid = mat(0,0);
     }
     
-    vec X1 = linspace(x1min, x1max, (int) ((x1max-x1min)/res) );
-    vec X2 = linspace(x2min, x2max, (int) ((x2max-x2min)/res) );
+    int grid_size_x1 = min( 100, (int) ((x1max-x1min)/res) );
+    int grid_size_x2 = min( 100, (int) ((x2max-x2min)/res) );
+    
+    vec X1 = linspace(x1min, x1max, grid_size_x1 );
+    vec X2 = linspace(x2min, x2max, grid_size_x2 );
             
     cout << "  Grid size: " << X1.length() << "x" << X2.length() << "x" << res << endl;
     
@@ -530,19 +551,15 @@ void SpatialExample::uniformGrid(mat X, mat &grid)
 bool SpatialExample::saveResults(string filename)
 {
     csvstream csv;
-    mat M = zeros(Xpred.rows(), 3);
-    
-    M.set_cols(0,Xpred);             // Prediction locations
-    M.set_col(2, ypred);             // Prediction mean 
+    mat M(Xpred);               // Predictive locations
     
     // If normalised data, project back to initial domain
     if (normaliseData) {
-        itppext::denormalise(M, Mmean, Mcovdiag);
-        vpred = Mcovdiag(2)*vpred;
+        itppext::denormalise(M, Xmean, Xcovdiag);
     }
     
-    M.set_size(M.rows(),M.cols()+1,true);
-    M.set_col(M.cols()-1,vpred);
+    M.append_col(ypred);        // Predictive mean
+    M.append_col(vpred);        // Predictive variance
     
     if (csv.write(M, filename)) {
         cerr << "Could not write prediction data to file." << endl;
@@ -584,19 +601,18 @@ void SpatialExample::run(string datafile, string predfile)
     // Save results
     cout << "Saving results" << endl;
     saveResults(predfile);
-    
 }
 
 int main(int argc, char* argv[])
 {
-    SpatialExample ex;
+    SpatialExample ex(true);
     
     switch (argc) {
     case 3: 
         {
             ex.setParameterEstimationMethod(PARAM_ESTIM_PSGP);
             ex.setNumberSweeps(1);
-            ex.setNumberOuterLoops(1);
+            ex.setNumberOuterLoops(3);
             ex.setNumberOptimIterations(5);
             
             long starttime = clock();
