@@ -13,7 +13,8 @@
 //#include <cassert>
 // #include <algorithm>
 
-#include "gaussianProcesses/SequentialGP.h"
+// #include "gaussianProcesses/SequentialGP.h"
+#include "gaussianProcesses/PSGP.h"
 #include "gaussianProcesses/GaussianProcess.h"
 #include "optimisation/SCGModelTrainer.h"
 
@@ -27,8 +28,8 @@
 using namespace std;
 using namespace itpp;
 
-enum ParameterEstimationMethod { PARAM_ESTIM_GP, PARAM_ESTIM_PSGP, PARAM_ESTIM_NO_ESTIMATION, 
-                                  PARAM_ESTIM_CUSTOM };
+enum ParameterEstimationMethod { PARAM_ESTIM_GP, PARAM_ESTIM_PSGP, PARAM_ESTIM_GP_PSGP,
+                                 PARAM_ESTIM_NO_ESTIMATION, PARAM_ESTIM_CUSTOM };
 
 enum PredictionType { PREDICTION_FULL, PREDICTION_CHUNKS };
 
@@ -71,8 +72,8 @@ protected:
     vec y, ypred;            // Output (observed, predicted)
     vec v, vpred;            // Output variance (observed, predicted)
     
-    mat M;                   // Data matrix
-    vec Mmean, Mcovdiag;     // Data mean and diagonal covariance (used in normalisation)
+    // mat M;                   // Data matrix
+    vec Xmean, Xcovdiag;     // Locations mean and diagonal covariance (used in normalisation)
     
     int n_active;            // Number of active points to use in PSGP
     int n_sweeps;            // Number of sweeps through the data in PSGP
@@ -117,8 +118,8 @@ protected:
     PredictionType predictionType;   // Whether we predict at all locations at once or split
                                      // the domain into chunks first
     long predictionChunkSize;        // Size of prediction chunks (number of locations)
-    bool makePredictionsFull(SequentialGP &psgp);
-    bool makePredictionsChunks(SequentialGP &psgp);
+    bool makePredictionsFull(PSGP &psgp);
+    bool makePredictionsChunks(PSGP &psgp);
     
 };
 
