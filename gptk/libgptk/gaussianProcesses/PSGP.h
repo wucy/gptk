@@ -50,6 +50,13 @@ using namespace itpp;
     enum LikelihoodCalculation { FullEvid, Approximate, UpperBound };
 #endif
     
+// We went through 3 implementations of the algorithm are available. 
+// Although we could have left the latest version only (V3) as it is the
+// fastest, speed optimisation has gone at the expense, possibly, of
+// understanding. Previous versions have been left for debugging/
+// backwards comparison purposes.
+enum AlgoVersion { ALGO_V1, ALGO_V2, ALGO_V3 };
+    
 class PSGP : public ForwardModel, public Optimisable
 {
 public:
@@ -74,6 +81,7 @@ public:
 	void makePredictions(vec& Mean, vec& Variance, const mat& Xpred) const;
 	
 	
+	void setAlgoVersion(AlgoVersion version) { algoVersion = version; }
 	void setGammaTolerance(double gammaMin) { gammaTolerance = gammaMin; }
 	
 	vec simulate(const mat& Xpred, bool approx) const;
@@ -104,6 +112,11 @@ public:
 	
 private:
 
+    // Version of the algorithm to use (should be V3, the 
+    // latest and fastest) unless an older version is really needed
+    // (for backwards comparison/debugging)
+    AlgoVersion algoVersion;
+    
     // Inputs and outputs
     mat& Locations;
     vec& Observations;
@@ -124,7 +137,6 @@ private:
     mat KB;             // covariance between BV
     mat Q;              // inverse covariance between BV
     mat C;              // for calculating variance
-    // mat S;              // Scoring matrix (used to compute scores when pruning) 
     vec alpha;          // alphas for calculating mean
     
     double gammaTolerance;  // Threshold determining whether an observation is added to active set
@@ -138,6 +150,34 @@ private:
     
     vec logZ;           // log-evidence
 
+    // Augmented matrices - When doing a full update, we add and remove points to 
+    // the active set. This operation being expensive (it involves memory reallocations),
+    // it is more efficient to use temporary extended matrices for that purpose. These
+    // matrices correspond to having an active set with an extra point. Points are added
+    // to the extended matrices, and removed by swapping the relevant rows/columns with the
+    // actual matrices (KB, Q, C, ...)
+    mat KB_aug;
+    mat Q_aug;
+    mat C_aug;
+    vec alpha_aug;
+    mat ActiveSet_aug;
+    ivec idxActiveSet_aug;
+    mat P_aug;
+    
+    // Augmented stuff - version 2: only store the changes, not the full matrices
+    // Modify the original ones instead.
+    int idxActiveSet_new;         // Index of the latest active point added to the set
+    vec ActiveSet_new;            // The latest (extra) active point added to the set
+    vec P_new;                    // The column of P for the latest active point
+    vec KB_new;                   // The covariance btw new active point and older ones
+    double kb_new;                // The auto-covariance of the new active point 
+    vec Q_new;                    // The inverse cov btw new active point and older ones
+    double q_new;                 // The inverse auto-cov btw new active point and older ones
+    double alpha_new;             // Alpha for the latest active point
+    vec C_new;                    // C btw latest active point and older ones
+    double c_new;                 // C btw latest active point and itself
+
+    
     LikelihoodCalculation likelihoodType;
     
     
@@ -147,27 +187,23 @@ private:
     void EP_removePreviousContribution(int iObs);
     void EP_updateIntermediateComputations(double &cavityMean, double &cavityVar, double &sigmaLoc,
                                            vec &k, double &gamma, vec &eHat, vec loc);
+    void EP_updateEPParameters(int iObs, double q, double r, double cavityMean, double cavityVar, 
+                               double logEvidence);
     void EP_removeCollapsedPoints();
     
-    void addActivePoint(int iObs);
+    // Implementation of the add/remove active point, version 1
+    void addActivePoint(int iObs, double q, double r, vec k, double sigmaLoc, double gamma, vec eHat);
     void deleteActivePoint(int iObs);
     
+    // Implementation of the add/remove active point, version 2 (augmented matrices)
+    void addActivePointAugmented_v1(int iObs, double q, double r, vec k, double sigmaLoc, double gamma, vec eHat);
+    void swapActivePoint_v1(int iObs);
+
+    // Implementation of the add/remove active point, version 3 (no extra matrices)
+    void addActivePointAugmented_v2(int iObs, double q, double r, vec k, double sigmaLoc, double gamma, vec eHat);
+    void swapActivePoint_v2(int iObs);
     
-    /* 
-    inline void addOne(int index, const LikelihoodType& noiseModel, const bool fixActiveSet);
-	void addOne_siteRemoval(int index);
-	void addOne_cavity(double sig0, double &mu, double &sigx, mat &KX, mat& Xmat);
-	void addOne_updateGammaEhat(double &gamma, vec &eHat, const double sig0, const mat KX);
-	void addOne_removeExtraPoints(const bool fixActiveSet);
-	void addOne_removeCollapsedPoints();
-    
-    
-	void updateSparse(mat& KX, vec& eHat, const double gamma, const double qtp1, const double rtp1, const double currentMean, const double currentVar, const double logEvidence, const int index);
-	void updateFull(const mat& KX, vec& eHat, const double gamma, const double qtp1, const double rtp1, const double sig0, const double currentMean, const double currentVar, const double logEvidence, const int index);
-	void updateEP();
-    */
-    
-	void stabiliseCoefficients(double& q, double& r, double cavityMean, double cavityVar, double upperTolerance, double lowerTolerance);
+    void stabiliseCoefficients(double& q, double& r, double cavityMean, double cavityVar, double upperTolerance, double lowerTolerance);
 	vec scoreActivePoints(ScoringMethod sm);
 
 	// Parameter optimisation functions and their gradients
