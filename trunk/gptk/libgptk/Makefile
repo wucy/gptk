@@ -23,6 +23,8 @@ OBJS =		    covarianceFunctions/GaussianCF.o \
 				covarianceFunctions/NegLogSigmoidTransform.o \
 				covarianceFunctions/SigmoidTransform.o \
 				covarianceFunctions/Matern3CF.o \
+				covarianceFunctions/Matern5CF.o \
+				covarianceFunctions/NeuralNetCF.o \
 				likelihoodModels/LikelihoodType.o \
 				likelihoodModels/AnalyticLikelihood.o \
 				likelihoodModels/GaussianLikelihood.o \
