@@ -1,0 +1,10 @@
+Package: psgp
+Version: 0.2-4
+Title: Projected Spatial Gaussian Process (psgp) methods
+Author: Ben Ingram <B.R.Ingram@Aston.ac.uk>, 
+  Remi Barillec <r.barillec@aston.ac.uk>
+Maintainer: Ben Ingram <B.R.Ingram@Aston.ac.uk>
+Depends: intamap
+Description: implements projected sparse Gaussian process kriging for the intamap package
+License: GPL (version 2 or later)
+
