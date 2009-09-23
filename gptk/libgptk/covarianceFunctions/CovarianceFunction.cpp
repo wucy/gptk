@@ -209,7 +209,7 @@ void CovarianceFunction::computeDistanceMatrix(mat& DM, const mat& X) const
 	{
 		for(int j=0; j<i; j++)
 		{
-			value = sum(itpp::pow(X.get_row(i) - X.get_row(j) , 2.0));
+			value = sum( sqr( X.get_row(i) - X.get_row(j) ) );
 			DM.set(i, j, value);
 			DM.set(j, i, value);
 		}

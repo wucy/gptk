@@ -12,6 +12,9 @@ SRC =	astonGeostats.cpp \
 	covarianceFunctions/ConstantCF.cpp \
 	covarianceFunctions/CovarianceFunction.cpp \
 	covarianceFunctions/ExponentialCF.cpp \
+	covarianceFunctions/Matern3CF.cpp \
+	covarianceFunctions/Matern5CF.cpp \
+	covarianceFunctions/NeuralNetCF.cpp \
 	covarianceFunctions/WhiteNoiseCF.cpp \
 	covarianceFunctions/SumCovarianceFunction.cpp \
 	covarianceFunctions/Transform.cpp \

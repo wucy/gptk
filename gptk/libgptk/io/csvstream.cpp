@@ -13,7 +13,7 @@ int csvstream::read(mat &M, const string filename)
 	vector < vector <string> > data;
 	vector<string> row;
 	string element, delimiters = ",\n\r";
-	// int row = 0;
+	
 	char ch;
 	
 	// Open file for reading
@@ -76,6 +76,7 @@ int csvstream::read(mat &M, const string filename)
 	
 	// Convert 2D array of strings to matrix of double
 	// RB: if atof fails, it returns 0.0 - how do we check everything went fine???
+	// RB: There must be an error flag set somewhere...
 	debug_msg("Convert data to matrix.");
 	for( unsigned int i = 0; i < data.size(); i++ ) {
 		for( unsigned int j = 0; j < data[i].size(); j++ ){

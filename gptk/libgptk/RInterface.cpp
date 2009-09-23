@@ -7,24 +7,30 @@
 #include "Rmath.h"
 #include "Rinternals.h"
 
+#define NUM_VARIOGRAM_PARAMETERS 5
+
 using namespace std;
 
 extern "C" {
-    SEXP predict(SEXP xData, SEXP yData, SEXP eData, SEXP xPred, SEXP vario, SEXP errorIdx, SEXP sensorIdx, SEXP metaData)
+    SEXP predict(SEXP xData, SEXP yData, SEXP eData, SEXP xPred, SEXP psgpPar, 
+                 SEXP errorIdx, SEXP sensorIdx, SEXP metaData)
     {
 
         SEXP meanResult;
         SEXP varResult;
         SEXP ans;
-        double range, sill, nugget, bias;
+        
+        // These are not used by PSGP anymore. Instead, we use the parameters 
+        // stored in psgpParameters 
+        // double range, sill, nugget, bias;
         int xDataLen, yDataLen, eDataLen, xPredLen;
-        //int* xs = INTEGER(paramA);
-        //int* ys = INTEGER(paramB);
         double *xDataPtr, *yDataPtr, *xPredPtr, *eDataPtr;
-        double *v = REAL(vario);
-        int *errorPtr, *sensorPtr;
-        int model = 0;
-        char **metaDataTable;
+        
+        // PSGP covariance function parameters
+        double  *psgpParameters = REAL(psgpPar);
+        
+        int     *errorPtr, *sensorPtr;
+        char    **metaDataTable;
 
         int metadataSize = length(metaData);
         // The metadata table, if provided, is terminated by an empty line
@@ -36,16 +42,6 @@ extern "C" {
         yDataLen = length(yData);
         xPredLen = length(xPred) / 2;
         eDataLen = length(eData);
-
-        // we need some default values here, or maybe we should add something in
-        // the learnParamters function to get a good start
-
-        model  = int(v[0]);
-        range  = v[1];
-        sill   = v[2];
-        nugget = v[3];
-        bias   = v[4];
-
 
         PROTECT(meanResult = allocVector(REALSXP, xPredLen));
         PROTECT(varResult = allocVector(REALSXP, xPredLen));
@@ -72,11 +68,17 @@ extern "C" {
             metaDataTable[i] = const_cast<char*>(CHAR(STRING_ELT(VECTOR_ELT(metaData, i),0)));
         }
 
+        /*
         makePredictions(xDataLen, xPredLen, eDataLen, xDataPtr, yDataPtr, xPredPtr, eDataPtr, 
                 metadataSize, errorPtr, sensorPtr, metaDataTable,
                 REAL(meanResult), REAL(varResult),
                 &range, &sill, &nugget, &bias, model);
-
+        */
+        printf("Making predictions\n");
+        makePredictions(xDataLen, xPredLen, eDataLen, xDataPtr, yDataPtr, xPredPtr, eDataPtr, 
+                        metadataSize, errorPtr, sensorPtr, metaDataTable,
+                        REAL(meanResult), REAL(varResult), psgpParameters);
+        
         SET_VECTOR_ELT(ans, 0, meanResult);
         SET_VECTOR_ELT(ans, 1, varResult);
 
@@ -88,15 +90,15 @@ extern "C" {
 extern "C" {
     SEXP estParam(SEXP xData, SEXP yData, SEXP eData, SEXP vario, SEXP errorIdx, SEXP sensorIdx, SEXP metaData)
     {
-        SEXP meanResult;
-        SEXP varResult;
-        SEXP ans;
-        double range, sill, nugget, bias;
+        // SEXP meanResult;
+        // SEXP varResult;
+        SEXP params;
         int xDataLen, eDataLen;
-        double *xDataPtr, *yDataPtr, *eDataPtr, *rans, *varioPtr;
+        double *xDataPtr, *yDataPtr, *eDataPtr, *varioPtr;
         int *errorPtr, *sensorPtr;
-        int model = 0;
+        // int model = 0;
         char **metaDataTable;
+        
 
         int metadataSize = length(metaData);
         // The metadata table, if provided, is terminated by an empty line
@@ -131,28 +133,45 @@ extern "C" {
             metaDataTable[i] = const_cast<char*>(CHAR(STRING_ELT(VECTOR_ELT(metaData, i),0)));
         }
 
-        // we need some default values here, or maybe we should add something in
-        // the learnParamters function to get a good start
-        model  = int(varioPtr[0]);
-        range  = varioPtr[1];
-        sill   = varioPtr[2];
-        nugget = varioPtr[3];	
-        bias	 = varioPtr[4];
-
-        learnParameters(xDataLen, eDataLen, xDataPtr, yDataPtr, eDataPtr,
-                metadataSize, errorPtr, sensorPtr, 
-                metaDataTable, &range, &sill, &nugget, &bias, model);
-
-        PROTECT(ans = allocVector(REALSXP, 5));
-
-        rans = REAL(ans);
-        rans[0] = model;
-        rans[1] = range;
-        rans[2] = sill;
-        rans[3] = nugget;
-        rans[4] = bias;
+        // Variogram and PSGP parameters are stored in the same array, which is
+        // eventrally returned on completion of this function.
+        // 
+        // The first NUM_VARIOGRAM_PARAMETERS parameters are for the variogram
+        // and the next NUM_PSGP_PARAMETERS (defined in astonGeostats.h) parameters
+        // are for the PSGP covariance function.
+        PROTECT(params = allocVector(REALSXP, NUM_PSGP_PARAMETERS));
+        double* psgpParameters = REAL(params);
         UNPROTECT(1);
-        return ans;
+        
+        // Copy current variogram parameters to parameter array
+        memcpy(psgpParameters, varioPtr, NUM_VARIOGRAM_PARAMETERS * sizeof(double));
+        
+        /*
+        printf("Variogram model:\n");
+        printf("  type   = %d\n", (int) varioPtr[0]);
+        printf("  range  = %f\n", varioPtr[1]);
+        printf("  sill   = %f\n", varioPtr[2]);
+        printf("  nugget = %f\n", varioPtr[3]);
+        printf("  bias   = %f\n", varioPtr[4]);
+        */
+        
+        
+        // Estimate parameters.
+        // This also updates the parameter values in psgpParameters 
+        // and in variogramParameters (if the initial parameters were not
+        // valid, i.e. negative...)
+        learnParameters(xDataLen, eDataLen, xDataPtr, yDataPtr, eDataPtr,
+                        metadataSize, errorPtr, sensorPtr, 
+                        metaDataTable, psgpParameters);
+        
+        /*
+        // Display resulting parameter vector
+        for(int i=0; i<NUM_VARIOGRAM_PARAMETERS+NUM_PSGP_PARAMETERS; i++) {
+            printf("Parameter %2d: %f\n", i, paramsPtr[i]);
+        }
+        */
+        
+        return params;
     }
 }
 

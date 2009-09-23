@@ -7,12 +7,15 @@
 int minusOne(int n) { return n-1; }
 
 void learnParameters(int numObs, int numError, double *xData, double *yData, double *errorData, 
-        int numMetadata, int *errPtr, int *sensorPtr, char **metaDataTable, double *range, double *sill, 
-        double *nugget, double *bias, int model)
+        int numMetadata, int *errPtr, int *sensorPtr, char **metaDataTable, 
+        double* psgpParameters)
 {
 
 	vec rndNums = itpp::randu(numObs);
 	ivec rndIdx = itpp::sort_index(rndNums);
+	
+	// Set number of active points to max(MAX_ACTIVE_POINTS, size(obs))
+	int n_active = min(MAX_ACTIVE_POINTS, numObs);
 	
 	// Limit to MAX_OBS observation for parameter estimation
 	// so that computations remain timely
@@ -32,34 +35,68 @@ void learnParameters(int numObs, int numError, double *xData, double *yData, dou
 		E(i) = errorData[rndIdx[i]];
 	}
 
-	// some reasonable starting parameters
-	double r1=abs(min(max(X, 1) - min(X, 1)));
-	double r2=abs(min(max(X, 2) - min(X, 2)));
-
-	*range = 0.25 * ((r1+r2) / 2.0);
-	*sill = abs(variance(y));
-	*nugget = 0.5 * *sill;
-	*bias = abs(1.0 / mean(y));
-
+	// RB: get variogram model parameters as a starting point
+	// variogramParameters[0] is the model ID - we don't need it.
+	double range  = psgpParameters[1];
+	double sill   = psgpParameters[2];
+	double nugget = psgpParameters[3];
+	double bias   = 0.0;
 	
-	// hardcode a gaussian covariance function so far
-	ExponentialCF covComp1(*range, *sill);
-  	WhiteNoiseCF covComp2(*nugget);
-	ConstantCF covComp3(*bias);
+	// Make sure everything is fine - the variogram estimation can  
+	// give invalid parameters (negative range...) - if not, revert
+	// to some first guess from the data.
+	if ( range <= 0.0 || sill <= 0.0 || nugget <= 0.0)
+	{
+	    cout << "Invalid variogram parameters: either the range, sill or nugget" << endl;
+	    cout << "is negative or zero. Reverting to some fixed defaults." << endl;
+	    
+	    double r1=abs(min(max(X, 1) - min(X, 1)));
+        double r2=abs(min(max(X, 2) - min(X, 2)));
+        
+        range = 0.25 * ((r1+r2) / 2.0);
+        sill = abs(variance(y));
+        nugget = 0.5 * sill;
+        bias = abs(1.0 / mean(y));    
+	}
+	
+	cout << "Range =  " << range << endl;
+	cout << "Sill  =  " << sill << endl;
+	cout << "Nugget = " << nugget << endl;
+	
+	// Covariance function
+	ExponentialCF kernel1(range, sill);
+	Matern3CF     kernel2(range, sill);
+	Matern5CF     kernel3(range, sill);
+	NeuralNetCF   kernel4(range, sill);
+	ConstantCF    kernel5(bias);
+	
+	// Kernel made of several covariance functions
+	SumCovarianceFunction covfKernel(kernel1);
+	covfKernel.addCovarianceFunction(kernel2);
+	covfKernel.addCovarianceFunction(kernel3);
+	covfKernel.addCovarianceFunction(kernel4);
+	covfKernel.addCovarianceFunction(kernel5);
 
-	SumCovarianceFunction covSum(covComp1);
-	covSum.addCovarianceFunction(covComp2);
-	covSum.addCovarianceFunction(covComp3);
-
+	// Final covariance function is kernel + bias + white noise
+	WhiteNoiseCF  covfNugget(nugget);
+	SumCovarianceFunction covSum(covfKernel);
+	covSum.addCovarianceFunction(covfNugget);
+	
 	cout << "===Starting Parameters===========================" <<endl;
 	covSum.displayCovarianceParameters();
 
+	// RB: Not necessary... since log-transform is already the default.
 	// there will be a little memory leak here - should sort this out at somepoint...
+	/*
 	covSum.setTransform(0, new LogTransform());
 	covSum.setTransform(1, new LogTransform());
 	covSum.setTransform(2, new LogTransform());
 	covSum.setTransform(3, new LogTransform());
-
+	covSum.setTransform(4, new LogTransform());
+    */
+	
+	// By default, we use PSGP to estimate parameters, but there is
+	// the option to use a GP instead.
 	if(PARAMETER_ESTIMATION_USING_GP) 
 	{
 	    // Use a GP to learn parameters
@@ -68,7 +105,7 @@ void learnParameters(int numObs, int numError, double *xData, double *yData, dou
     	SCGModelTrainer gpTrainer(gp);
     
     	gpTrainer.setAnalyticGradients(true);
-    	gpTrainer.setCheckGradient(true);
+    	gpTrainer.setCheckGradient(false);
     	gpTrainer.Train(50);
 	}
 	else
@@ -81,15 +118,15 @@ void learnParameters(int numObs, int numError, double *xData, double *yData, dou
 	    if(numMetadata == 0)
 	    {
 	        cout << "No noise model specified" << endl;
-	        cout << "Defaulting to GAUSSIAN:" << (*nugget * 0.01) << endl;
-	        defaultLikelihood = new GaussianLikelihood(*nugget * 0.01);
+	        cout << "Defaulting to GAUSSIAN with variance" << (nugget * LIKELIHOOD_NUGGET_RATIO) << endl;
+	        defaultLikelihood = new GaussianLikelihood(nugget * LIKELIHOOD_NUGGET_RATIO);
 	    }
 	    else
 	    {
 	        cout << "Noise models specified. Extracting from metadata table." << endl;
 
-	        string    modelName[numObs];                          // Name of likelihood model for each obs
-	        itpp::vec modelParams[numObs];                        // Params of likelihood model for each obs
+	        string    modelName[numObs];      // Name of likelihood model for each obs
+	        itpp::vec modelParams[numObs];    // Params of likelihood model for each obs
 	        
 	        // Shift indexes (starting from 1 in data, from 0 in ITPP)
 	        iLikelihoodModel = apply_function(minusOne, ivec(errPtr, numObs));
@@ -106,7 +143,7 @@ void learnParameters(int numObs, int numError, double *xData, double *yData, dou
 	    }
 	    
 	    // LEARN PARAMETERS USING PSGP AND LIKELIHOOD MODEL(S) GENERATED ABOVE
-	    PSGP psgp(X, y, covSum);
+	    PSGP psgp(X, y, covSum, n_active, NUM_SWEEPS_CHANGING, NUM_SWEEPS_FIXED);
 	            
 	    if (numMetadata == 0) {
 	        psgp.computePosterior(*defaultLikelihood);
@@ -117,7 +154,7 @@ void learnParameters(int numObs, int numError, double *xData, double *yData, dou
 	    
 	    SCGModelTrainer gpTrainer(psgp);
 	    gpTrainer.setAnalyticGradients(true);
-	    gpTrainer.setCheckGradient(true);
+	    gpTrainer.setCheckGradient(false);
 	    
 	    for (int i=0; i<PSGP_PARAM_ITERATIONS; i++)
 	    {
@@ -128,19 +165,37 @@ void learnParameters(int numObs, int numError, double *xData, double *yData, dou
 	    }
 	}
 	
-	
-	
-	cout << "===Finishing Parameters===========================" <<endl;
+	cout << "===Final Parameters===========================" <<endl;
 	covSum.displayCovarianceParameters();
 
-	*range  = covSum.getParameter(0);
-	*sill   = covSum.getParameter(1);
-	*nugget = covSum.getParameter(2);
-	*bias   = covSum.getParameter(3);
+
+	// Replace range and variance with that of the Exponential kernel
+	// Bias and nugget are replaced with the new values
+	// This is only so that we get a "valid" variogram model when returning to R.
+	// However, it is unclear what this variogram model is used for afterwards -
+	// hopefuly it isn't used at all.
+	/*
+	variogramParameters[1] = kernel1.getParameter(0);          // Range
+	variogramParameters[2] = kernel1.getParameter(1);          // Sill
+	variogramParameters[3] = covfNugget.getParameter(0);       // Nugget
+	variogramParameters[4] = kernel5.getParameter(0);          // Bias
+	*/
+	
+	// Copy final parameters over to psgpParameters
+	vec finalParams = covSum.getParameters();
+	for(int i=0; i<finalParams.length(); i++)
+	{
+	    *psgpParameters++ = finalParams(i);
+	}
+		
+	// Add padding zeros (remember psgpParameters has fixed size and is
+	// likely to be bigger than we need)
+	for(int i=finalParams.length(); i<NUM_PSGP_PARAMETERS; i++)
+	{
+	    *psgpParameters++ = 0.0;
+	}
+	
 }
-
-
-
 
 
 /**
@@ -170,19 +225,18 @@ void learnParameters(int numObs, int numError, double *xData, double *yData, dou
  */
 void makePredictions(int numObs, int numPred, int numError, double *xData, double *yData,  double *xPred, 
                      double *errorData, int numMetadata, int *errPtr, int *sensorPtr, char **metaDataTable, 
-                     double *meanPred, double *varPred, double *range, double *sill, double *nugget,
-                     double *bias, int model)
+                     double *meanPred, double *varPred, double* psgpParameters)
 {
-    
-	LikelihoodType *defaultLikelihood = new GaussianLikelihood(*nugget * 0.01);
-	
-	Vec<LikelihoodType*> likelihoodModels(numObs);        // Vector of likelihood models
+    LikelihoodType *defaultLikelihood;
+    Vec<LikelihoodType*> likelihoodModels(numObs);        // Vector of likelihood models
 	ivec iLikelihoodModel(numObs);                        // Index of likelihood model for each obs
 	
-	cout<< "Number of observations: " << numObs << endl;
-	cout<< "Number of prediction:   " << numPred << endl;
-	cout<< "Number of error values: " << numError << endl;
-	cout<< "Size of metadata:       " << numMetadata << endl;
+	/*
+	cout<< "Number of observations:         " << numObs << endl;
+	cout<< "Number of prediction locations: " << numPred << endl;
+	cout<< "Number of error values:         " << numError << endl;
+	cout<< "Size of metadata:               " << numMetadata << endl;
+	*/
 	
 	// Convert arguments to IT++ vectors/matrices
 	vec rndNums = itpp::randu(numObs);
@@ -190,63 +244,55 @@ void makePredictions(int numObs, int numPred, int numError, double *xData, doubl
 
 	// Why only use 500 obs? Speed issue?
 	// int minLim = min(numObs, 500);
-
-	// mat X = itpp::zeros(numObs,2);
-	// vec y = itpp::zeros(numObs);
-	// vec E = itpp::zeros(numObs);
 	mat X = reshape(vec(xData,2*numObs),numObs,2);
 	vec y = vec(yData,numObs);
 	vec E = vec(errorData,numObs);
 	
-	// mat Xpred = itpp::zeros(numPred, 2);
 	mat Xpred = reshape(vec(xPred,2*numPred),numPred,2);
 	vec predY = itpp::zeros(numPred);
 	vec predVar = itpp::zeros(numPred);
 	
-	/*
-	// DEBUG: Dump data to file(s)
-	csvstream csv;
-	mat debug_data(X);
-	debug_data.append_col(y);
-	debug_data.append_col(E);
-	debug_data.append_col(to_vec(ivec(errPtr,numObs)));
-	debug_data.append_col(to_vec(ivec(sensorPtr,numObs)));
-	csv.write(debug_data, "debug_data.csv");            // Input data
-	csv.write(Xpred, "debug_pred.csv");        // Prediction locations
-	vec debug_params(9);
-	debug_params(0) = numObs;
-	debug_params(1) = numPred;
-	debug_params(2) = numError;
-	debug_params(3) = numMetadata;
-	debug_params(4) = *range;
-	debug_params(5) = *sill; 
-	debug_params(6) = *nugget;
-	debug_params(7) = *bias;
-	debug_params(8) = model;
-	csv.write(debug_params,"debug_params.csv");
+	//-------------------------------------------------------------------------
+    // COVARIANCE FUNCTION
+	// 
+    // The covariance function parts are created with dummy parameter values.
+	// The full set of parameters is then overwritten by properly estimated    
+	// values.
+    //-------------------------------------------------------------------------
+	
+	double dummy_range  = 1.0;   // This is a dummy value - overwritten below.
+	double dummy_sill   = 1.0;   // This is a dummy value - overwritten below.
+	double dummy_bias   = 1e-3;  // This is a dummy value - overwritten below.
+	double dummy_nugget = 1e-2;  // This is a dummy value - overwritten below.
+	
+	// Covariance function
+    ExponentialCF kernel1(dummy_range, dummy_sill);
+    Matern3CF     kernel2(dummy_range, dummy_sill);
+    Matern5CF     kernel3(dummy_range, dummy_sill);
+    NeuralNetCF   kernel4(dummy_range, dummy_sill);
+    ConstantCF    kernel5(dummy_bias);
+    
+    // Kernel made of several covariance functions
+    // This is the kernel used for prediction
+    SumCovarianceFunction covfKernel(kernel1);
+    covfKernel.addCovarianceFunction(kernel2);
+    covfKernel.addCovarianceFunction(kernel3);
+    covfKernel.addCovarianceFunction(kernel4);
+    covfKernel.addCovarianceFunction(kernel5);
 
-	ofstream f("debug_metadata.csv", ios::trunc); 
-	for(int i=0; i<numMetadata; i++) {
-	    f << metaDataTable[i] << endl;
-	}
-	f.close();
-	*/
+    // Final covariance function is kernel + white noise
+    WhiteNoiseCF  covfNugget(dummy_nugget);
+    SumCovarianceFunction covSum(covfKernel);
+    covSum.addCovarianceFunction(covfNugget);
 	
-	// need to make this use a factory method from IT++
-	// this would make things much more efficient
-	/*
-	for(int i=0; i < numObs; i++) {
-	    X(i, 0) = xData[rndIdx[i]];
-	    X(i, 1) = xData[rndIdx[i] + numObs];
-	    // y(i) = yData[rndIdx[i]];
-	    // E(i) = errorData[rndIdx[i]];
-	}
+    // Overwrite current dummy parameters with correct, estimated ones
+    int nparams = covSum.getNumberParameters();
+    covSum.setParameters( vec(psgpParameters, nparams) );
 	
-	for(int i=0; i < numPred; i++) {
-            Xpred(i, 0) = xPred[i];
-            Xpred(i, 1) = xPred[i + numPred];
-    }
-	*/
+    
+    // Nugget is the last parameter
+    double nugget = covSum.getParameter(nparams-1);
+    
 	
 	//-------------------------------------------------------------------------
 	//
@@ -256,8 +302,8 @@ void makePredictions(int numObs, int numPred, int numError, double *xData, doubl
 	if(numMetadata == 0)
 	{
 		cout << "No noise model specified" << endl;
-		cout << "Defaulting to GAUSSIAN:" << (*nugget * 0.01) << endl;
-		defaultLikelihood = new GaussianLikelihood(*nugget * 0.01);
+		cout << "Defaulting to GAUSSIAN with variance = " << (nugget * LIKELIHOOD_NUGGET_RATIO) << endl;
+		defaultLikelihood = new GaussianLikelihood(nugget * LIKELIHOOD_NUGGET_RATIO);
 	}
 	else
 	{
@@ -283,9 +329,10 @@ void makePredictions(int numObs, int numPred, int numError, double *xData, doubl
 	
 	//-------------------------------------------------------------------------
 	//
-	// INITIALISE PSGP AND COVARIANCE FUNCTION
+	// INITIALISE PSGP
 	//
 	//-------------------------------------------------------------------------
+	/*
 	// Hardcode a gaussian covariance function so far
 	ExponentialCF covComp1(*range, *sill);
   	WhiteNoiseCF covComp2(*nugget);
@@ -300,12 +347,13 @@ void makePredictions(int numObs, int numPred, int numError, double *xData, doubl
 	// but without nugget term - noise free prediction)
 	SumCovarianceFunction covSumPred(covComp1);
 	covSumPred.addCovarianceFunction(covComp3);
+	*/
 	
 	// Set number of active points to max(MAX_ACTIVE_POINTS, size(obs))
 	int n_active = min(MAX_ACTIVE_POINTS, numObs);
 	
 	// SequentialGP ssgp(2,1,n_active,X,y,covSum,1);
-	PSGP ssgp(X,y,covSum,n_active,1,1);
+	PSGP ssgp(X, y, covSum, n_active, NUM_SWEEPS_CHANGING, NUM_SWEEPS_FIXED);
 
 	cout << "Computing posterior..." << endl;
 	if (numMetadata == 0) {
@@ -314,17 +362,16 @@ void makePredictions(int numObs, int numPred, int numError, double *xData, doubl
 	else {
 	    ssgp.computePosterior(iLikelihoodModel, likelihoodModels);
 	}
-	cout << "Predicting..."<<endl;
-
-	// should add an option here to select one or the other...
-	if(0)
+	
+	if ( !USING_CHUNK_PREDICTION )
 	{
-	    ssgp.makePredictions(predY, predVar, Xpred, covSumPred);
+	    cout << "Predicting..."<<endl;
+	    ssgp.makePredictions(predY, predVar, Xpred, covfKernel);
 	}
 	else
 	{
 	    int startVal = 0;
-	    int chunkSize = 1000;
+	    int chunkSize = CHUNK_SIZE;
 	    int endVal = chunkSize - 1;
 
 	    if(endVal > numPred)
@@ -339,12 +386,11 @@ void makePredictions(int numObs, int numPred, int numError, double *xData, doubl
 	        
 	        mat XpredChunk = Xpred.get_rows(startVal, endVal);
 
-	        // predYChunk.set_size(chunkSize);
-	        // predVarChunk.set_size(chunkSize);
+	        // Predicted mean and variance for data chunk
 	        vec predYChunk(chunkSize);
 	        vec predVarChunk(chunkSize);
 
-	        ssgp.makePredictions(predYChunk, predVarChunk, XpredChunk, covSumPred);
+	        ssgp.makePredictions(predYChunk, predVarChunk, XpredChunk, covfKernel);
 
 	        predY.replace_mid(startVal, predYChunk);
 	        predVar.replace_mid(startVal, predVarChunk);
@@ -367,8 +413,10 @@ void makePredictions(int numObs, int numPred, int numError, double *xData, doubl
 		varPred[i]  = predVar(i);
 	}
 
+	cout << "PSGP used the following parameters:" << endl;
 	covSum.displayCovarianceParameters();
 
+	cout << "Done." << endl;
 }
 
 

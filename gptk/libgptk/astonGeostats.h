@@ -2,7 +2,6 @@
 #define ASTONGEOSTATS_H
 
 
-
 #include "R.h"
 #include "Rmath.h"
 
@@ -10,8 +9,8 @@
 #include "itpp/itstat.h"
 
 #include "gaussianProcesses/ForwardModel.h"
-// #include "gaussianProcesses/SequentialGP.h"
 #include "gaussianProcesses/PSGP.h"
+
 #include "gaussianProcesses/GaussianProcess.h"
 #include "optimisation/Optimisable.h"
 #include "optimisation/SCGModelTrainer.h"
@@ -28,6 +27,9 @@
 #include "covarianceFunctions/GaussianCF.h"
 #include "covarianceFunctions/ExponentialCF.h"
 #include "covarianceFunctions/WhiteNoiseCF.h"
+#include "covarianceFunctions/Matern3CF.h"
+#include "covarianceFunctions/Matern5CF.h"
+#include "covarianceFunctions/NeuralNetCF.h"
 #include "covarianceFunctions/SumCovarianceFunction.h"
 #include "covarianceFunctions/LogTransform.h"
 #include "covarianceFunctions/IdentityTransform.h"
@@ -42,11 +44,25 @@
 #include <algorithm>
 #include <stdexcept>
 
+//-----------------------------------------------------------------------------
+// CONSTANTS AND OTHER GENERAL PARAMETERS
+//-----------------------------------------------------------------------------
+
+// Max number of parameters for PSGP (this limit is set by the R code)
+#define NUM_PSGP_PARAMETERS 16
+
 // Maximum number of observations kept for param estimation
 #define MAX_OBS 1000
 
 // Maximum number of active points
 #define MAX_ACTIVE_POINTS 400
+
+// Likelihood to nugget ratio
+#define LIKELIHOOD_NUGGET_RATIO 0.01
+
+// Number of sweeps through data with changing/fixed active set
+#define NUM_SWEEPS_CHANGING 1
+#define NUM_SWEEPS_FIXED 1
 
 // ID for invalid noise model (when using observation noise) 
 #define INVALID_MODEL_NAME "INVALID_MODEL"
@@ -60,19 +76,31 @@
 // Inner loop (i.e. SCG iterations in each outer loop) for PSGP
 #define PSGP_SCG_ITERATIONS 5
 
+// Define whether to use full prediction (all data at once) or 
+// split prediction (by chunks of data)
+#define USING_CHUNK_PREDICTION true
+
+// Size of prediction chunk (in number of observations)
+#define CHUNK_SIZE 1000
+
 
 
 using namespace std;
 using namespace itpp;
 
+// RB: These following been replaced by psgpInitParams (model was not used so removed too)
+//     double *range, double *sill, double *nugget, double *bias 
+//     int model
 void learnParameters(int numObs, int numError, double *xData, double *yData, double *errorData, 
                      int numMetadata, int *errPtr, int *sensorPtr, char **metaDataTable, 
-                     double *range, double *sill, double *nugget, double *bias, int model);
+                     double* psgpParams);
 
+// RB: These have been replaced by psgpParams (model was not used so removed too)
+//     double *range, double *sill, double *nugget, double *bias
+//     int model
 void makePredictions(int numObs, int numPred, int numError, double *xData, double *yData, 
                      double *errorData, double *xPred, int numMetadata, int *errPtr, int *sensorPtr, 
-                     char **metaDataTable, double *meanPred, double *varPred, double *range, 
-                     double *sill, double *nugget, double *bias, int model);
+                     char **metaDataTable, double *meanPred, double *varPred, double* psgpParams);
 
 void parseMetadata(char** metadataTable, const ivec likelihoodModelIndexes,  
                    string modelNames[], vec modelParams[]);

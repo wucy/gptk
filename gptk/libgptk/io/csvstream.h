@@ -3,12 +3,13 @@
 
 // Uncomment following line to enable debugging messages
 // #define DEBUG
-#include "../debug.h"
 #include <iostream>
 #include <string>
 #include <vector>
 #include <itpp/itbase.h>
+#include <cassert>
 
+#define debug_msg(msg)
 
 using namespace std;
 using namespace itpp;
