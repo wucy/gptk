@@ -41,7 +41,7 @@ int main(void)
     GraphPlotter gplot = GraphPlotter();
 
     // Generate some data from a GP
-    double range  = 2.0;               // The range or length scale of the GP
+    double range  = 3.0;               // The range or length scale of the GP
     double sill   = 2.0;               // The sill or variance of the GP
     double nugget = 0.0001;            // The noise variance
 
@@ -53,15 +53,14 @@ int main(void)
 
     // Generate some data from a GP
     int n_points = 200;
-    Xtst = 12.0*(randu(n_points)-0.5);       // Sample the input randomly
-    sort(Xtst);                              // Sort the input
+    Xtst = linspace(-12,12,n_points);
 
     mat K = zeros(Xtst.length(), Xtst.length());
     covFunc.computeSymmetric(K, Xtst);      // Covariance of the inputs
     Ytst = (chol(K)).transpose()*randn(n_points);   // Outputs
 
     // Training set - use a random subsample from the data
-    int n_train = 60;     // 60 training points
+    int n_train = 42;     // 60 training points
     ivec itrn = to_ivec( linspace(0,Xtst.length()-1,n_train) );
     Xtrn = Xtst(itrn);
     Ytrn = Ytst(itrn);
@@ -69,27 +68,27 @@ int main(void)
     // Noise model 1 is gaussian(0,0.1)
     // Noise model 2 is exponential(1.0)
     // Noise model 3 is gaussian(0,0.4)
-    double sigma1 = 0.01;
-    double lambda = 1.0;
-    double sigma2 = 0.1;
+    double sigma1 = 0.02;
+    double lambda = 0.4;
+    double sigma2 = 0.02;
     vec noise1 = sqrt(sigma1)*randn(n_train/3);
     vec noise2 = lambda * exp( -lambda * randu(n_train/3) );
-    vec noise3 = sqrt(sigma2)*randn(n_train/3);
+    vec noise3 = sqrt(sigma2)*randn(n_train/3);  
 
     Ytrn += concat(noise1, noise2, noise3);
     mat Xtrnmat = Xtrn;
 
     // Initialise the PSGP
-    int n_active = n_train;    
+    int n_active = 10; // n_train;    
 
-    gaussianCovFunc.setParameter(0, 0.5);
-    nuggetCovFunc.setParameter(0, 2.0);
+    // gaussianCovFunc.setParameter(0, 0.5);
+    // nuggetCovFunc.setParameter(0, 2.0);
     PSGP psgp(Xtrnmat, Ytrn, covFunc, n_active);
-    psgp.setGammaTolerance(1e-6);
+    // psgp.setGammaTolerance(1e-6);
     
     // Use a Gaussian likelihood model with fixed variance (set to 
     // the nugget variance) 
-    GaussianLikelihood gaussLik(0.01);
+    GaussianLikelihood gaussLik(0.5*(sigma1+sigma2));
     
     // Compute the PSGP posterior distribution under the Gaussian likelihood
     // Recompute the posterior - the best active points are selected from
@@ -98,7 +97,7 @@ int main(void)
     
     SCGModelTrainer scg(psgp);
     
-    for(int i=0; i<5; i++)
+    for(int i=0; i<0; i++)
     {
         scg.Train(5);
         psgp.resetPosterior();
@@ -110,7 +109,9 @@ int main(void)
     psgpmean = zeros(n_points);
     psgpvar  = zeros(n_points);
     psgp.makePredictions(psgpmean, psgpvar, mat(Xtst), gaussianCovFunc);
-
+    vec activeX = (psgp.getActiveSetLocations()).get_col(0);
+    vec activeY = Ytrn(psgp.getActiveSetIndices());
+        
     
     // Recompute with multiple likelihood models
     Vec<LikelihoodType*> multiLik(n_train);
@@ -124,10 +125,11 @@ int main(void)
         else 
             multiLik[i] = new GaussianLikelihood(sigma2);
     }
-    
+   
+    psgp.resetPosterior();
     psgp.computePosterior(multiLikIndex, multiLik);
         
-    for(int i=0; i<5; i++)
+    for(int i=0; i<0; i++)
     {
         scg.Train(5);
         psgp.resetPosterior();
@@ -135,24 +137,27 @@ int main(void)
     }
     
     
-    // Plot PSGP mean and error bars
-    gplot.plotPoints(Xtst, psgpmean, "psgp mean", LINE, BLUE);
-    gplot.plotPoints(Xtst, psgpmean + 2.0*sqrt(psgpvar), "error bar", LINE, BLUE);
-    gplot.plotPoints(Xtst, psgpmean - 2.0*sqrt(psgpvar), "error bar", LINE, BLUE);
-
-    psgp.makePredictions(psgpmean, psgpvar, mat(Xtst), gaussianCovFunc);
+    // Plot PSGP mean and error bars (Gaussian likelihood)
     gplot.plotPoints(Xtst, psgpmean, "psgp mean", LINE, GREEN);
     gplot.plotPoints(Xtst, psgpmean + 2.0*sqrt(psgpvar), "error bar", LINE, GREEN);
     gplot.plotPoints(Xtst, psgpmean - 2.0*sqrt(psgpvar), "error bar", LINE, GREEN);
+    gplot.plotPoints(activeX, activeY, "active points", CIRCLE, GREEN);
     
-    // Plot observations
-    gplot.plotPoints(Xtst, Ytst, "GP", LINE, RED);
-    gplot.plotPoints(Xtrn, Ytrn, "Obs", CROSS, RED);
-          
-    // Plot active points
-    vec activeX = (psgp.getActiveSetLocations()).get_col(0);
-    vec activeY = Ytrn(psgp.getActiveSetIndices());
+    // Predictions and active points for PSGP (Multiple likelihood)
+    psgp.makePredictions(psgpmean, psgpvar, mat(Xtst), gaussianCovFunc);
+    activeX = (psgp.getActiveSetLocations()).get_col(0);
+    activeY = Ytrn(psgp.getActiveSetIndices());
+        
+    // Plot PSGP mean and error bars (Multiple likelihood)
+    gplot.plotPoints(Xtst, psgpmean, "psgp mean", LINE, BLUE);
+    gplot.plotPoints(Xtst, psgpmean + 2.0*sqrt(psgpvar), "error bar", LINE, BLUE);
+    gplot.plotPoints(Xtst, psgpmean - 2.0*sqrt(psgpvar), "error bar", LINE, BLUE);
     gplot.plotPoints(activeX, activeY, "active points", CIRCLE, BLUE);
 
+    // Plot observations
+    gplot.plotPoints(Xtst, Ytst, "GP", LINE, RED);
+    gplot.plotPoints(Xtrn, Ytrn, "Obs", CIRCLE, RED);
+          
+    
     return 0;   
 }

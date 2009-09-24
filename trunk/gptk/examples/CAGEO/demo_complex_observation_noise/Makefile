@@ -16,9 +16,10 @@ all: $(PROGRAM_NAME)
 
 $(PROGRAM_NAME): main.o
 	$(CXX) $(CXXFLAGS) $(LIBS) main.o -lgptk -lxerces-c -o $(PROGRAM_NAME)
+	@echo "** Done"
 
 main.o: main.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c main.cpp -o main.o
-
+	
 	
 	
