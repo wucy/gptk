@@ -33,7 +33,7 @@ using namespace std;
 using namespace itpp;
 
 
-int main(void)
+int main(int argc, char* argv[])
 {
     vec Xtrn, Xtst, Ytrn, Ytst;
     vec psgpmean, psgpvar;
@@ -65,21 +65,21 @@ int main(void)
     Xtrn = Xtst(itrn);
     Ytrn = Ytst(itrn);
 
-    // Noise model 1 is gaussian(0,0.1)
-    // Noise model 2 is exponential(1.0)
-    // Noise model 3 is gaussian(0,0.4)
-    double sigma1 = 0.02;
-    double lambda = 0.4;
-    double sigma2 = 0.02;
+    // Noise model 1 is gaussian(0,sigma1)
+    // Noise model 2 is exponential(lambda)
+    // Noise model 3 is gaussian(0,sigma2)
+    double sigma1 = 0.01;
+    double lambda = 5.0;
+    double sigma2 = 0.01;
     vec noise1 = sqrt(sigma1)*randn(n_train/3);
-    vec noise2 = lambda * exp( -lambda * randu(n_train/3) );
+    vec noise2 = - log(randu(n_train/3))/lambda;
     vec noise3 = sqrt(sigma2)*randn(n_train/3);  
 
     Ytrn += concat(noise1, noise2, noise3);
     mat Xtrnmat = Xtrn;
 
     // Initialise the PSGP
-    int n_active = 10; // n_train;    
+    int n_active = n_train;    
 
     // gaussianCovFunc.setParameter(0, 0.5);
     // nuggetCovFunc.setParameter(0, 2.0);
@@ -158,6 +158,6 @@ int main(void)
     gplot.plotPoints(Xtst, Ytst, "GP", LINE, RED);
     gplot.plotPoints(Xtrn, Ytrn, "Obs", CIRCLE, RED);
           
-    
-    return 0;   
+    return 0;
+       
 }
