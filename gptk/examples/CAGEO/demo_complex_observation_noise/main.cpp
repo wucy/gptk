@@ -21,6 +21,7 @@
 #include "gaussianProcesses/PSGP.h"
 
 #include "likelihoodModels/GaussianLikelihood.h"
+#include "likelihoodModels/GaussianSampLikelihood.h"
 #include "likelihoodModels/ExponentialSampLikelihood.h"
 
 #include "covarianceFunctions/SumCovarianceFunction.h"
@@ -32,6 +33,15 @@
 using namespace std;
 using namespace itpp;
 
+/**
+ * Observation operator for 3rd noise type (the data, x, is not observed
+ * directly. Instead, a quartic expression is observed.)  
+ */
+double obsOperator (double x) 
+{ 
+    return  pow(x/3.0, 4.0); 
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -41,8 +51,8 @@ int main(int argc, char* argv[])
     GraphPlotter gplot = GraphPlotter();
 
     // Generate some data from a GP
-    double range  = 3.0;               // The range or length scale of the GP
-    double sill   = 2.0;               // The sill or variance of the GP
+    double range  = 10.0;               // The range or length scale of the GP
+    double sill   = 10.0;               // The sill or variance of the GP
     double nugget = 0.0001;            // The noise variance
 
     // Covariance function: Gaussian + Nugget
@@ -52,43 +62,49 @@ int main(int argc, char* argv[])
     covFunc.addCovarianceFunction(nuggetCovFunc);
 
     // Generate some data from a GP
-    int n_points = 200;
-    Xtst = linspace(-12,12,n_points);
+    int n_points = 1000;
+    Xtst = linspace(0,210,n_points);
 
     mat K = zeros(Xtst.length(), Xtst.length());
-    covFunc.computeSymmetric(K, Xtst);      // Covariance of the inputs
-    Ytst = (chol(K)).transpose()*randn(n_points);   // Outputs
+    gaussianCovFunc.computeSymmetric(K, Xtst);      // Covariance of the inputs
+    Ytst = (chol(K+0.0001*eye(n_points))).transpose()*randn(n_points);   // Outputs
 
     // Training set - use a random subsample from the data
-    int n_train = 42;     // 60 training points
+    int n_train = 200;
     ivec itrn = to_ivec( linspace(0,Xtst.length()-1,n_train) );
     Xtrn = Xtst(itrn);
     Ytrn = Ytst(itrn);
 
     // Noise model 1 is gaussian(0,sigma1)
     // Noise model 2 is exponential(lambda)
-    // Noise model 3 is gaussian(0,sigma2)
-    double sigma1 = 0.01;
-    double lambda = 5.0;
-    double sigma2 = 0.01;
-    vec noise1 = sqrt(sigma1)*randn(n_train/3);
-    vec noise2 = - log(randu(n_train/3))/lambda;
-    vec noise3 = sqrt(sigma2)*randn(n_train/3);  
+    // Noise model 3 is gaussian(0,sigma3) 
+    double sigma1 = 2.0;
+    double lambda = 0.7;
+    double mu3 = 3.0;
+    double sigma3 = 0.5;
+    vec noise1 = sqrt(sigma1)*randn(70);
+    vec noise2 = - log(randu(70))/lambda;
+    vec noise3 = mu3 + sqrt(sigma3)*randn(60);  
 
-    Ytrn += concat(noise1, noise2, noise3);
+    Ytrn.set_subvector(0, 69, Ytrn(0,69) + noise1);
+    Ytrn.set_subvector(70, 139, Ytrn(70,139) + noise2); 
+    
+    // An observation operator is applied to the third segment: 1/sigma2 * y^4 + 2.0
+    Ytrn.set_subvector(140, 199, apply_function( &obsOperator, Ytrn(140, 199) ) + noise3);   
+    
     mat Xtrnmat = Xtrn;
 
     // Initialise the PSGP
-    int n_active = n_train;    
+    int n_active = 50;    
 
     // gaussianCovFunc.setParameter(0, 0.5);
     // nuggetCovFunc.setParameter(0, 2.0);
-    PSGP psgp(Xtrnmat, Ytrn, covFunc, n_active);
+    PSGP psgp(Xtrnmat, Ytrn, covFunc, n_active, 1, 2);
     // psgp.setGammaTolerance(1e-6);
     
     // Use a Gaussian likelihood model with fixed variance (set to 
-    // the nugget variance) 
-    GaussianLikelihood gaussLik(0.5*(sigma1+sigma2));
+    // the empirical observation variance) 
+    GaussianLikelihood gaussLik( itpp::variance( concat(noise1, noise2, noise3) ) );
     
     // Compute the PSGP posterior distribution under the Gaussian likelihood
     // Recompute the posterior - the best active points are selected from
@@ -114,17 +130,11 @@ int main(int argc, char* argv[])
         
     
     // Recompute with multiple likelihood models
-    Vec<LikelihoodType*> multiLik(n_train);
-    ivec multiLikIndex = to_ivec(linspace(0,n_train-1,n_train));
-    for (int i=0; i<n_train; i++)
-    {
-        if (i<n_train/3) 
-            multiLik[i] = new GaussianLikelihood(sigma1);
-        else if (i<2*n_train/3)
-            multiLik[i] = new ExponentialSampLikelihood(lambda);
-        else 
-            multiLik[i] = new GaussianLikelihood(sigma2);
-    }
+    ivec multiLikIndex = to_ivec( concat( zeros(70), ones(70), 2*ones(60) ) );
+    Vec<LikelihoodType*> multiLik(3);
+    multiLik[0] = new GaussianLikelihood(sigma1);
+    multiLik[1] = new ExponentialSampLikelihood(lambda);
+    multiLik[2] = new GaussianSampLikelihood(mu3, sigma3, &obsOperator);
    
     psgp.resetPosterior();
     psgp.computePosterior(multiLikIndex, multiLik);
@@ -137,6 +147,10 @@ int main(int argc, char* argv[])
     }
     
     
+    // Plot observations
+    gplot.plotPoints(Xtst, Ytst, "GP", LINE, RED);
+    gplot.plotPoints(Xtrn, Ytrn, "Obs", CIRCLE, RED);
+    
     // Plot PSGP mean and error bars (Gaussian likelihood)
     gplot.plotPoints(Xtst, psgpmean, "psgp mean", LINE, GREEN);
     gplot.plotPoints(Xtst, psgpmean + 2.0*sqrt(psgpvar), "error bar", LINE, GREEN);
@@ -145,6 +159,7 @@ int main(int argc, char* argv[])
     
     // Predictions and active points for PSGP (Multiple likelihood)
     psgp.makePredictions(psgpmean, psgpvar, mat(Xtst), gaussianCovFunc);
+    
     activeX = (psgp.getActiveSetLocations()).get_col(0);
     activeY = Ytrn(psgp.getActiveSetIndices());
         
@@ -154,9 +169,7 @@ int main(int argc, char* argv[])
     gplot.plotPoints(Xtst, psgpmean - 2.0*sqrt(psgpvar), "error bar", LINE, BLUE);
     gplot.plotPoints(activeX, activeY, "active points", CIRCLE, BLUE);
 
-    // Plot observations
-    gplot.plotPoints(Xtst, Ytst, "GP", LINE, RED);
-    gplot.plotPoints(Xtrn, Ytrn, "Obs", CIRCLE, RED);
+    
           
     return 0;
        

@@ -18,6 +18,8 @@
 
 #include "likelihoodModels/GaussianLikelihood.h"
 
+#include "io/csvstream.h" 
+
 #include "covarianceFunctions/SumCovarianceFunction.h"
 #include "covarianceFunctions/GaussianCF.h"
 #include "covarianceFunctions/WhiteNoiseCF.h"
@@ -36,9 +38,9 @@ int main(void)
     GraphPlotter gplot = GraphPlotter();
 
     // Generate some data from a GP
-    double range  = 2.0;               // The range or length scale of the GP
-    double sill   = 2.0;               // The sill or variance of the GP
-    double nugget = 0.02;              // The noise variance
+    double range  = 5.0;               // The range or length scale of the GP
+    double sill   = 3.0;               // The sill or variance of the GP
+    double nugget = 0.1;              // The noise variance
 
     // Covariance function: Gaussian + Nugget
     GaussianCF   gaussianCovFunc(range, sill);            
@@ -47,8 +49,8 @@ int main(void)
     covFunc.addCovarianceFunction(nuggetCovFunc);
 
     // Generate some data from a GP
-    int n_points = 200;
-    Xtst = linspace(-10,10,n_points);       // Sample the input randomly
+    int n_points = 400;
+    Xtst = linspace(-20,20,n_points);       // Sample the input randomly
 
     mat K = zeros(Xtst.length(), Xtst.length());
     gaussianCovFunc.computeSymmetric(K, Xtst);              // Covariance of the inputs
@@ -66,14 +68,23 @@ int main(void)
 
     // Use a fixed set of active points/basis vectors
     int n_active = 8;    // Start with 8 active points
-    ivec active_indices = to_ivec( linspace(0, n_train-1, n_active) );
+    // ivec active_indices = to_ivec( linspace(0, n_train-1, n_active) );
+    ivec active_indices = to_ivec(n_train * randu(n_active));
     
     // Compute the PSGP posterior distribution under the Gaussian likelihood
     // after more and more observations have been seen. The active set remains
     // fixed.
     int subset_size = 1;
+    int N = 7;
     
-    for (int i=0; i<7; i++) 
+    mat active_set(2, n_active);
+    active_set.set_row(0, Xtrn(active_indices));
+    active_set.set_row(1, Ytrn(active_indices));
+    mat psgpm = zeros(N, n_points);
+    mat psgpv = zeros(N, n_points);
+    mat obs = zeros(2*N,n_train);
+    
+    for (int i=0; i<N; i++) 
     {
         cout << "Posterior process after seeing " << subset_size << " observation(s)" << endl;
         
@@ -88,7 +99,7 @@ int main(void)
         // through the data with replacement is set to 0 to ensure 
         // the active set remains fixed. The active set comprises the first 8
         // observations (indices 0 to 7).
-        PSGP psgp(X_subset, Y_subset, covFunc, n_active, 0, 1);
+        PSGP psgp(X_subset, Y_subset, covFunc, n_active, 0, 5);
         psgp.setGammaTolerance(0.0);
         psgp.setActiveSet( ivec("0:7"), gaussLik );
         
@@ -100,7 +111,7 @@ int main(void)
         psgpmean = zeros(n_points);
         psgpvar  = zeros(n_points);
         psgp.makePredictions(psgpmean, psgpvar, mat(Xtst), gaussianCovFunc);
-
+        /*
         // Plot PSGP mean and error bars
         gplot.clearPlot();
         gplot.plotPoints(Xtst, psgpmean, "psgp mean", LINE, BLUE);
@@ -115,15 +126,34 @@ int main(void)
         vec activeX = (psgp.getActiveSetLocations()).get_col(0);
         vec activeY = Y_subset(psgp.getActiveSetIndices());
         gplot.plotPoints(activeX, activeY, "active points", CIRCLE, BLUE);
-
+         */
+        
         // Double the number of observations for the next iteration
         subset_size *= 2;
         psgp.setActiveSetSize(n_active);
         
-        cout << "Press a key to continue" << endl;
-        getchar();
+        
+        // Save data for Matlab
+        obs.set_row( i, concat( Xtrn(subset_indices), zeros(obs.cols()-subset_indices.length()) ) );
+        obs.set_row( N+i, concat( Ytrn(subset_indices), zeros(obs.cols()-subset_indices.length()) ) );
+        psgpm.set_row( i, psgpmean );
+        psgpv.set_row( i, psgpvar );
+        
+        // cout << "Press a key to continue" << endl;
+        // getchar();
     }
 
+    // Save data for Matlab plotting
+    csvstream csv;
+    csv.write(active_set,"demo_proj_active_set.csv");
+    csv.write(psgpm,"demo_proj_psgp_mean.csv");
+    csv.write(psgpv,"demo_proj_psgp_var.csv");
+    csv.write(obs,"demo_proj_obs.csv");
+    mat tst(2, n_points);
+    tst.set_row(0, Xtst);
+    tst.set_row(1, Ytst);
+    csv.write(tst, "demo_proj_test.csv");
+    
 
     cout << "End of demonstration" << endl;
     
