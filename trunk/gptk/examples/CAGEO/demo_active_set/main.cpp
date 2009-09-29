@@ -21,8 +21,9 @@ int main(void)
     // True GP parameters
     double range  = 5.0;               // The range or length scale of the GP
     double sill   = 3.0;               // The sill or variance of the GP
-    double nugget = 0.04;              // The noise variance
-
+    double nugget = 0.01;              // The noise variance
+    double noisevar = 0.01;
+    
     // Parameter ranges (for likelihood profile)
     int n = 100;
     mat paramRanges(3,n);
@@ -39,7 +40,7 @@ int main(void)
     //-------------------------------------------------------------------------
     // Generate some data from GP with known parameters
     int n_points = 400;
-    Xtst = linspace(-20,20, n_points);
+    Xtst = linspace(-40,40, n_points);
     mat K = zeros(Xtst.length(), Xtst.length());
     gaussianCovFunc.computeSymmetric(K, Xtst);              // Covariance of the inputs
     Ytst = (chol(K+0.0001*eye(n_points))).transpose()*randn(n_points);   // Outputs
@@ -48,7 +49,7 @@ int main(void)
     int n_train = 64;
     ivec itrn = to_ivec(linspace(0,Xtst.length()-1,n_train));
     Xtrn = Xtst(itrn);
-    Ytrn = Ytst(itrn) + sqrt(nugget)*randn(n_train);
+    Ytrn = Ytst(itrn) + sqrt(noisevar)*randn(n_train);
     mat Xtrnmat = Xtrn;
     
     //-------------------------------------------------------------------------
@@ -56,6 +57,8 @@ int main(void)
     GaussianProcess gp(1, 1, Xtrnmat, Ytrn, covFunc);
     gpmean = zeros(n_points);
     gpvar = zeros(n_points);
+    SCGModelTrainer scggp(gp);
+    scggp.Train(15);
     gp.makePredictions(gpmean, gpvar, Xtst, gaussianCovFunc);
     
     // Likelihood profile for full GP
@@ -87,11 +90,17 @@ int main(void)
     // Initialise the PSGP
     int n_active = 8;    // Start with 8 active points
 
+    covFunc.setParameter(0, range);
+    covFunc.setParameter(1, sill);
+    covFunc.setParameter(2, nugget);
     PSGP psgp(Xtrnmat, Ytrn, covFunc, n_active, 1, 5);
+    psgp.setGammaTolerance(1e-10);
+    
 
     // Use a Gaussian likelihood model with fixed variance (set to 
     // the nugget variance) 
     GaussianLikelihood gaussLik(nugget);
+    psgp.computePosterior(gaussLik);
     
     // Compute the PSGP posterior distribution under the Gaussian likelihood
     // for an increasing number of active points
@@ -102,8 +111,12 @@ int main(void)
 
         // Recompute the posterior - the best active points are selected from
         // the 40 points in the training set
-        psgp.resetPosterior();
-        psgp.computePosterior(gaussLik);
+        for (int i=0; i<3; i++) {
+            SCGModelTrainer scg(psgp);
+            scg.Train(5);
+            psgp.resetPosterior();
+            psgp.computePosterior(gaussLik);
+        }
         
         // Note that we are not using the covariange function without the
         // nugget term for prediction.
@@ -145,8 +158,9 @@ int main(void)
         psgpm.set_row(i, psgpmean);
         psgpv.set_row(i, psgpvar);
         ivec iactive = psgp.getActiveSetIndices();
-        active_set.set_row( i, concat( Xtrn(iactive), zeros(n_train-n_active)) );
-        active_set.set_row( N+i, concat( Ytrn(iactive), zeros(n_train-n_active)) );
+        cout << "Saving " << iactive.length() << " active points" << endl;
+        active_set.set_row( i, concat( Xtrn(iactive), zeros(n_train-iactive.length()) ) );
+        active_set.set_row( N+i, concat( Ytrn(iactive), zeros(n_train-iactive.length())) );
         
         //---------------------------------------------------------------------
         // Increase the number of active point for next iteration
@@ -160,11 +174,11 @@ int main(void)
     //-------------------------------------------------------------------------
     // Write data for Matlab plotting
     csv.write(active_set,"demo_set_active_set.csv");
-    csv.write(gpmv, "demo_set_gp.csv");
-    csv.write(psgpm,"demo_set_psgp_mean.csv");
-    csv.write(psgpv,"demo_set_psgp_var.csv");
-    csv.write(obs,"demo_set_obs.csv");
-    csv.write(test, "demo_set_test.csv");
+    csv.write(gpmv,  "demo_set_gp.csv");
+    csv.write(psgpm, "demo_set_psgp_mean.csv");
+    csv.write(psgpv, "demo_set_psgp_var.csv");
+    csv.write(obs,   "demo_set_obs.csv");
+    csv.write(test,  "demo_set_test.csv");
     
     return 0;   
 }

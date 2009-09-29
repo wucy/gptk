@@ -17,6 +17,8 @@
 
 #include "covarianceFunctions/SumCovarianceFunction.h"
 #include "covarianceFunctions/GaussianCF.h"
+#include "covarianceFunctions/ExponentialCF.h"
+#include "covarianceFunctions/Exponential2CF.h"
 #include "covarianceFunctions/Matern3CF.h"
 #include "covarianceFunctions/Matern5CF.h"
 #include "covarianceFunctions/NeuralNetCF.h"
@@ -26,6 +28,9 @@
 using namespace std;
 using namespace itpp;
 
-void run_scenario6(int n_active);
+/** 
+ * Main routine - runs the experiment for a given number of active points
+ */
+void run(int n_active);
 
 #endif /*MAIN_H_*/
