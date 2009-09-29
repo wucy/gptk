@@ -40,7 +40,8 @@ int main(void)
     // Generate some data from a GP
     double range  = 5.0;               // The range or length scale of the GP
     double sill   = 3.0;               // The sill or variance of the GP
-    double nugget = 0.1;              // The noise variance
+    double nugget = 0.02;              // The noise variance
+    double noisevar = 0.1;              // The noise variance
 
     // Covariance function: Gaussian + Nugget
     GaussianCF   gaussianCovFunc(range, sill);            
@@ -60,7 +61,7 @@ int main(void)
     int n_train = 64;
     ivec itrn = to_ivec(linspace(0,Xtst.length()-1,n_train));
     Xtrn = Xtst(itrn);
-    Ytrn = Ytst(itrn) + sqrt(nugget)*randn(n_train);
+    Ytrn = Ytst(itrn) + sqrt(noisevar)*randn(n_train);
 
     // Use a Gaussian likelihood model with fixed variance (set to 
     // the nugget variance) 
@@ -68,8 +69,8 @@ int main(void)
 
     // Use a fixed set of active points/basis vectors
     int n_active = 8;    // Start with 8 active points
-    // ivec active_indices = to_ivec( linspace(0, n_train-1, n_active) );
-    ivec active_indices = to_ivec(n_train * randu(n_active));
+    ivec active_indices = to_ivec( linspace(0, n_train-1, n_active) );
+    // ivec active_indices = to_ivec(n_train * randu(n_active));
     
     // Compute the PSGP posterior distribution under the Gaussian likelihood
     // after more and more observations have been seen. The active set remains
@@ -99,11 +100,9 @@ int main(void)
         // through the data with replacement is set to 0 to ensure 
         // the active set remains fixed. The active set comprises the first 8
         // observations (indices 0 to 7).
-        PSGP psgp(X_subset, Y_subset, covFunc, n_active, 0, 5);
-        psgp.setGammaTolerance(0.0);
+        PSGP psgp(X_subset, Y_subset, covFunc, n_active, 0, 2);
+        psgp.setGammaTolerance(1e-10);
         psgp.setActiveSet( ivec("0:7"), gaussLik );
-        
-        // Compute the posterior - the active set is now fixed
         psgp.computePosterior(gaussLik);
         
         // Note that we are not using the covariange function without the

@@ -43,7 +43,7 @@ using namespace itpp;
  */
 double obsOperator (double x) 
 { 
-    return  pow(x/3.0, 4.0); 
+    return 2.0*pow(x/3.0,3.0) - 2.0; // pow(x/3.0, 4.0) + 5.0; 
 }
 
 
@@ -57,24 +57,30 @@ int main(int argc, char* argv[])
     GraphPlotter gplot = GraphPlotter();
 
     // Generate some data from a GP
-    double range  = 10.0;               // The range or length scale of the GP
+    double range  = 20.0;               // The range or length scale of the GP
     double sill   = 10.0;               // The sill or variance of the GP
-    double nugget = 0.1;               // The noise variance
+    double nugget = 0.02;               // The noise variance
 
     // Covariance function: Gaussian + Nugget
-    Matern3CF   maternCovFunc(range, sill);            
-    WhiteNoiseCF nuggetCovFunc(nugget);
-    SumCovarianceFunction covFunc(maternCovFunc);
-    covFunc.addCovarianceFunction(nuggetCovFunc);
+    Matern3CF   maternCovFuncGP(range, sill);            
+    WhiteNoiseCF nuggetCovFuncGP(nugget);
+    SumCovarianceFunction gpCovFunc(maternCovFuncGP);
+    gpCovFunc.addCovarianceFunction(nuggetCovFuncGP);
+    
+    Matern3CF   maternCovFuncPSGP(range, sill);            
+    WhiteNoiseCF nuggetCovFuncPSGP(nugget);
+    SumCovarianceFunction psgpCovFunc(maternCovFuncPSGP);
+    psgpCovFunc.addCovarianceFunction(nuggetCovFuncPSGP);
+        
 
     // Generate some data from a GP
-    GaussianCF dataCovFunc(range, sill);
+    Matern3CF dataCovFunc(range, sill);
     int n_points = 1000;
     Xtst = linspace(0,210,n_points);
 
     mat K = zeros(Xtst.length(), Xtst.length());
     dataCovFunc.computeSymmetric(K, Xtst);      // Covariance of the inputs
-    Ytst = (chol(K+0.0001*eye(n_points))).transpose()*randn(n_points);   // Outputs
+    Ytst = (chol(K)).transpose()*randn(n_points);   // Outputs
 
     // Training set - use a random subsample from the data
     int n_train = 200;
@@ -85,13 +91,13 @@ int main(int argc, char* argv[])
     // Noise model 1 is gaussian(0,sigma1)
     // Noise model 2 is exponential(lambda)
     // Noise model 3 is gaussian(0,sigma3) 
-    double sigma1 = 2.0;
+    double sigma1 = 1.0;
     double lambda = 0.7;
-    double mu3 = 5.0;
-    double sigma3 = 0.5;
+    double mu3 = 0.0;
+    double sigma3 = 0.1;
     vec noise1 = sqrt(sigma1)*randn(70);
     vec noise2 = - log(randu(70))/lambda;
-    vec noise3 = mu3 + sqrt(sigma3)*randn(60);  
+    vec noise3 = sqrt(sigma3)*randn(60);  
 
     Ytrn.set_subvector(0, 69, Ytrn(0,69) + noise1);
     Ytrn.set_subvector(70, 139, Ytrn(70,139) + noise2); 
@@ -101,18 +107,17 @@ int main(int argc, char* argv[])
     
     mat Xtrnmat = Xtrn;
 
-    // Use a Gaussian likelihood model with fixed variance (set to 
-    // the empirical observation variance) 
-    nuggetCovFunc.setParameter(0, itpp::variance( concat(noise1, noise2, noise3) ) );
-
-    
+        
     //-------------------------------------------------------------------------
     // Regression using PSGP with multiple likelihood models
     
     // Initialise the PSGP
     int n_active = 50;
     
-    PSGP psgp(Xtrnmat, Ytrn, covFunc, n_active, 1, 5);
+    //nuggetCovFuncPSGP.setParameter(0, itpp::variance( concat(noise1, noise2, noise3) ) );
+    
+    PSGP psgp(Xtrnmat, Ytrn, psgpCovFunc, n_active, 1, 1);
+    psgp.setLikelihoodType(UpperBound);
     
     ivec multiLikIndex = to_ivec( concat( zeros(70), ones(70), 2*ones(60) ) );
     Vec<LikelihoodType*> multiLik(3);
@@ -136,11 +141,16 @@ int main(int argc, char* argv[])
         psgp.resetPosterior();
         psgp.computePosterior(multiLikIndex, multiLik);
     }
+    psgpCovFunc.displayCovarianceParameters();
+    cout << endl << endl;
+    maternCovFuncPSGP.displayCovarianceParameters();
+    
+    cout << "------------------------------------------------------------" << endl;
     
     // Predictions and active points for PSGP (Multiple likelihood)
     vec psgpmean = zeros(n_points);
     vec psgpvar  = zeros(n_points);
-    psgp.makePredictions(psgpmean, psgpvar, mat(Xtst), maternCovFunc);
+    psgp.makePredictions(psgpmean, psgpvar, mat(Xtst), maternCovFuncPSGP);
 
     // Active set
     ivec iactive = psgp.getActiveSetIndices();
@@ -149,7 +159,11 @@ int main(int argc, char* argv[])
     
     //-------------------------------------------------------------------------
     // Regression using standard GP and Gaussian likelihood
-    GaussianProcess gp(1, 1, Xtrnmat, Ytrn, covFunc);
+    // Use a Gaussian likelihood model with fixed variance (set to 
+    // the empirical observation variance) 
+    nuggetCovFuncGP.setParameter(0, itpp::variance( concat(noise1, noise2, noise3) ) );
+    
+    GaussianProcess gp(1, 1, Xtrnmat, Ytrn, gpCovFunc);
 
     // Estimate the covariance function parameters
     SCGModelTrainer scg2(gp);
@@ -163,7 +177,9 @@ int main(int argc, char* argv[])
     // nugget term for prediction.
     vec gpmean = zeros(n_points);
     vec gpvar  = zeros(n_points);
-    gp.makePredictions(gpmean, gpvar, mat(Xtst), maternCovFunc);
+    gp.makePredictions(gpmean, gpvar, mat(Xtst), maternCovFuncGP);
+    
+    gpCovFunc.displayCovarianceParameters();
 
     /*
     //-------------------------------------------------------------------------
@@ -214,6 +230,8 @@ int main(int argc, char* argv[])
     obs.set_row(1, Ytrn);
     csv.write(obs, "demo_noise_obs.csv");
     
+    cout << "Done" << endl;
+
 
     //-------------------------------------------------------------------------
     // LIKELIHOOD PROFILES
@@ -221,9 +239,9 @@ int main(int argc, char* argv[])
     // Parameter ranges (for likelihood profile)
     int n = 100;
     mat paramRanges(3,n);
-    paramRanges.set_row(0, linspace(range*0.1, range*5.0, n));
-    paramRanges.set_row(1, linspace(sill*0.1,  sill*5.0, n));
-    paramRanges.set_row(2, linspace(nugget*0.1, nugget*100.0, n));
+    paramRanges.set_row(0, linspace(range*0.1, range*2.0, n));
+    paramRanges.set_row(1, linspace(sill*0.01,  sill*2.0, n));
+    paramRanges.set_row(2, linspace(nugget*0.1, nugget*10.0, n));
 
     // Likelihood profile for full GP
     mat profilesGP = computeLikelihoodProfileGP(gp, paramRanges);;
@@ -247,7 +265,7 @@ int main(int argc, char* argv[])
         // nugget term for prediction.
         psgpmean = zeros(n_points);
         psgpvar  = zeros(n_points);
-        psgp.makePredictions(psgpmean, psgpvar, mat(Xtst), maternCovFunc);
+        psgp.makePredictions(psgpmean, psgpvar, mat(Xtst), maternCovFuncPSGP);
 
         //---------------------------------------------------------------------
         // Compute likelihood profile
