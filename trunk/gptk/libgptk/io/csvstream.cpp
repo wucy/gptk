@@ -1,13 +1,29 @@
 #include "csvstream.h"
 
+/**
+ * Default constructor
+ */
 csvstream::csvstream()
 {
 }
 
+/**
+ * Destructor
+ */
 csvstream::~csvstream()
 {
 }
 
+/**
+ * Read in a matrix from a CSV file
+ * 
+ * @param M         The returned matrix with P rows and N columns, where P is the number 
+ *                  of lines of the CSV file and N is the number of values (separated
+ *                  by commas) on each line   
+ * @param filename  The name of a file containing the elements of a P by N matrix as 
+ *                  comma separated values (N values per lines, P lines)
+ * @return          1 if there was an error, 0 otherwise
+ */
 int csvstream::read(mat &M, const string filename) 
 {
 	vector < vector <string> > data;
@@ -88,7 +104,14 @@ int csvstream::read(mat &M, const string filename)
 }
 
 
-
+/**
+ * Writes a matrix to a CSV file
+ * 
+ * @param M         A matrix with P rows and N columns
+ * @param filename  The name of a file where the elements M are written as  
+ *                  comma separated values (N values per lines, P lines)
+ * @return          dan1 if there was an error, 0 otherwise
+ */
 int csvstream::write(const mat M, const string filename, int decimals) 
 {
 	int i,j;
