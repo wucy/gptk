@@ -30,15 +30,18 @@
 #define ANALYTICLIKELIHOOD_H_
 
 #include "LikelihoodType.h"
-
+/**
+ * Provides a base class from which the actual analytic
+ * likelihood implementations can extend. The likelihood class
+ * is used to update the coefficients of the projected sequential
+ * approximation for a single observation. 
+ */
 class AnalyticLikelihood : public LikelihoodType
 {
 public:
 	AnalyticLikelihood();
 	virtual ~AnalyticLikelihood();
-
 	virtual double updateCoefficients(double& K1, double& K2, double Observation, double ModelMean, double ModelVariance) const = 0;
-
 };
 
 #endif /*ANALYTICLIKELIHOOD_H_*/

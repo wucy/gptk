@@ -1,10 +1,16 @@
 #include "AnalyticLikelihood.h"
 
-AnalyticLikelihood::AnalyticLikelihood()
+/**
+ * Default constructor
+ */
+ AnalyticLikelihood::AnalyticLikelihood()
 {
 
 }
 
+/**
+ * Destructor
+ */
 AnalyticLikelihood::~AnalyticLikelihood()
 {
 }
