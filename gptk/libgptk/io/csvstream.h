@@ -14,27 +14,20 @@
 using namespace std;
 using namespace itpp;
 
+/**
+ * This class provides support for reading from and
+ * writing to CSV (comma separated values) files. At the moment,
+ * it only supports reading to and writing from matrices, and does
+ * not (yet) work like a proper C++ stream, although support for 
+ * streamed input/output will be added later.
+ */
 class csvstream
 {
 public:
 	csvstream();
 	virtual ~csvstream();
 	
-	/**
-	 * Reads a matrix from a CSV file
-	 * 
-	 * @param matrix The matrix to which the data is read (does not need to be pre-allocated)
-	 * @param filename The name of the CSV file to read 
-	 **/
 	int read(mat &matrix, const string filename);
-
-	/**
-	 * Writes a matrix to a CSV file
-	 * 
-	 * @param matrix The matrix containing the data
-	 * @param filename The name of the CSV file to write to 
-	 * @params decimals The number of retained decimals 
-	 **/
 	int write(const mat matrix, const string filename, int decimals = 5);
 
 };
