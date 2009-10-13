@@ -1,7 +1,7 @@
 /***************************************************************************
  *   AstonGeostats, algorithms for low-rank geostatistical models          *
  *                                                                         *
- *   Copyright (C) Ben Ingram, 2008                                        *
+ *   Copyright (C) Ben Ingram, Remi Barillec 2008                          *
  *                                                                         *
  *   Ben Ingram, IngramBR@Aston.ac.uk                                      *
  *   Neural Computing Research Group,                                      *
@@ -33,16 +33,18 @@
 #include <itpp/itbase.h>
 
 using namespace std;
-
+/**
+ * Provide a base class from which the actual
+ * likelihood implementations can extend. The likelihood class
+ * is used to update the coefficients of the projected sequential
+ * approximation for a single observation. 
+ */
 class LikelihoodType
 {
 public:
 	LikelihoodType();
 	virtual ~LikelihoodType();
-
 	double virtual updateCoefficients(double& K1, double& K2, double Observation, double ModelMean, double ModelVariance) const = 0;
-
-
 };
 
 #endif /*LIKELIHOODTYPE_H_*/
