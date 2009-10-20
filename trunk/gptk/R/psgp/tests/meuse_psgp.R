@@ -21,14 +21,11 @@ psgpObject = createIntamapObject(
 checkSetup(psgpObject)
 
 # do interpolation steps:
-psgpObject = estimateParameters(psgpObject) #, idpRange = seq(0.25,2.75,.25), nfold=3) # faster
+psgpObject = estimateParameters(psgpObject)
 
 # make prediction
 psgpObject = spatialPredict(psgpObject)
 
 # Plot prediction
-#grays = gray.colors(4, 0.55, 0.95)
-#image(psgpObject$predictions, col=grays)
-X11()
-plot(psgpObject)
-plot(meuse, pch=1, cex=sqrt(meuse$value)/20, add=TRUE)
+# plotIntamap(psgpObject)
+# plotIntamap(meuse, pch=1, cex=sqrt(meuse$value)/20, add=TRUE)

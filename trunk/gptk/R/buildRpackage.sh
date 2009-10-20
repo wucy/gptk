@@ -3,7 +3,7 @@
 # This should only be needed once.
 SRC_FOLDER=`pwd`/psgp/src
 CUR_FOLDER=`pwd`
-if [[ ! -f $SRC_FOLDER/Makefile ]]
+if [[ ! -f $CUR_FOLDER/psgp/configure.ac ]]
 then
     echo Source folder not setup. Running setup script.
     cd $SRC_FOLDER
