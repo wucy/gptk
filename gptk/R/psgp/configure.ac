@@ -1,0 +1,1 @@
+../../libgptk/configure.ac
