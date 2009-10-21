@@ -9,7 +9,7 @@ GPTK_ROOT=`pwd | sed -e "s/\/R\/psgp\/src//"`
 GPTK_SRC=$GPTK_ROOT/libgptk
 
 # FILES/FOLDERS TO LINK TO
-LINK_TO=("Makefile.Rpackage"
+LINK_TO=("Makevars.in"
          "astonGeostats.cpp"
          "covarianceFunctions"
          "io"
