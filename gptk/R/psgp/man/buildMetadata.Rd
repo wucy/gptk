@@ -21,7 +21,7 @@
   \code{\link{learnParameters}},
   \code{\link{makePrediction}},
   \code{\link[=intamap]{estimateParameters}},
-  \code{\link[=intamap]{makePrediction}}
+  \code{\link[=intamap]{spatialPredict}},
 }
 \examples{
   ## Load our favourite dataset

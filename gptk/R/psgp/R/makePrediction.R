@@ -45,7 +45,7 @@ makePrediction <- function(object, vario)
   # provided instead
   if (is.null(metaData)) 
   {
-    metadata <- buildMetadata(inputs);
+    metaData <- buildMetadata(inputs);
   }
 
   

@@ -6,14 +6,14 @@
 \synopsis{ makePrediction(object, vario) }
 \usage{ makePrediction(object, vario) }
 \arguments{
-  \item{object}{ a list object of Intamap type. Most arguments necessary for
+  \item{object}{ a list object of intamap type. Most arguments necessary for
     interpolation are passed through this object. See \link[=intamap]{00Introduction} for 
     further description of the necessary content of this variable.  Additional meta data 
     about the measurement process is included in this object. In particular, see 
-    \link{learnParameters} for a way to specify measurement error variances (and biases).
+    \link{learnParameters} for a way to specify measurement error variances.
   }
   \item{vario}{ Log-parameters of the covariance function. For compatibility with the 
-    Intamap package, the log-parameters of the PSGP covariance function are stored within
+    intamap package, the log-parameters of the PSGP covariance function are stored within
     a variogram array object (see \code{\link[=intamap]{vgm}}), as follows: \cr
     vario[1,1]   NA \cr
     vario[1,2]   length scale (or range) of the Exponential kernel \cr
@@ -25,7 +25,7 @@
   } 
 } 
 
-\section{Warning}{It is advised to use the Intamap wrapper \code{\link[=intamap]{spatialPredict}} rather than calling this method directly.}
+\section{Warning}{It is advised to use the intamap wrapper \code{\link{spatialPredict}} rather than calling this method directly.}
 
 \details{
   The Projected Spatial Gaussian Process (PSGP) framework provides  
@@ -38,7 +38,7 @@
   
   Measurement characteristics (i.e. observation error) can be specified if needed. 
   See \link{learnParameters} for a description of how to specify measurement error
-  models with given variances (and bias).
+  models with given variances.
 }
 
 \references{ 
@@ -56,5 +56,8 @@ limited covariance functions. Stochastic Environmental Research and Risk Assessm
   \code{\link{learnParameters}}
   \code{\link[intamap]{spatialPredict}}, 
   \code{\link[intamap]{createIntamapObject}}
+}
+\examples{
+  # see example in spatialPredict
 }
 \keyword{spatial}

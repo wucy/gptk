@@ -3,7 +3,7 @@
 \alias{spatialPredict}
 \title{Spatial prediction using a Projected Sequential Gaussian Process (PSGP)}
 \description{This overloads the \code{\link[=intamap]{spatialPredict}} routine 
-  from the Intamap package for interpolation using the PSGP method.
+  from the intamap package for interpolation using the PSGP method.
 }
 \synopsis{ spatialPredict(object,...) }
 \usage{ spatialPredict(object, ...) }
@@ -20,7 +20,7 @@
   further detail.
 }
 
-\author{Remi Barillec}
+\author{Ben Ingram, Remi Barillec}
 \seealso{
   \code{\link{psgp-package}}, 
   \code{\link[intamap]{estimateParameters}}, 
@@ -43,9 +43,9 @@ nobs = length(meuse$value)      # Number of observations
 meuse$oeid = seq(1:nobs)        # One error model per observation
 
 # Indicate the variance for each of these error models
-meuse$oevar = rnorm(nobs)
+meuse$oevar <- abs( rnorm( max(meuse$oeid) ) )
 
-# Set up Intamap object
+# Set up intamap object
 obj = createIntamapObject(
   observations = meuse,
   predictionLocations = meuse.grid,

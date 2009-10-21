@@ -34,15 +34,15 @@ learnParameters <- function(object) {
   obsErrId = as.integer(inputs$oeid)
   sensorId = as.integer(inputs$sensor)
   
-  # If a metadata has been provided, pass it to PSGP directly
+  # Retrieve metadata
   metaData = object$obsChar
   
-  # Otherwise, attempt to build the metadata from the variances
+  # If no metadata, attempt to build it from the variances
   # (observations$oevar) and, if available, biases (observations$oebias)
   # in the observations data structure
   if (is.null(metaData)) 
   {
-    metadata <- buildMetadata(inputs);
+    metaData <- buildMetadata(inputs);
   }
   
   #------------------------------------------
