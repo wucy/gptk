@@ -25,7 +25,7 @@
   further detail.
 }
 
-\author{Remi Barillec}
+\author{Remi Barillec, Ben Ingram}
 \seealso{
   \code{\link{learnParameters}},
   \code{\link[intamap]{estimateParameters}},
@@ -41,6 +41,19 @@ data(meuse.grid)
 gridded(meuse.grid) = ~x+y
 proj4string(meuse) = CRS("+init=epsg:28992")
 proj4string(meuse.grid) = CRS("+init=epsg:28992")
+
+# the following two steps are only needed if one wishes to
+# include observation errors
+
+# indicate which likelihood model should be used for each observation
+# in this case we use a different model for each observation
+nobs = length(meuse$value)          # Number of observations
+meuse$oeid  <- seq(1:nobs)
+  
+# the variances for the error models are random in this example
+# in real examples they will come from actual measurements 
+# characteristics
+meuse$oevar <- abs( rnorm( max(meuse$oeid) ) )
 
 # set up intamap object:
 obj = createIntamapObject(

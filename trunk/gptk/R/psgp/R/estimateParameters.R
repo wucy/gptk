@@ -1,4 +1,4 @@
-estimateParameters.psgp = function(object,...) {
+estimateParameters.psgp = function(object) {
 
   origObs = object$observations
   
@@ -11,9 +11,15 @@ estimateParameters.psgp = function(object,...) {
     rotated = TRUE
   }  
 
-  #if (require(astonGeostats)) 
+  
+  # Restore measurement error characteristics
+  # object$observations$oeid = origObs$oeid;
+  # object$observations$oevar = origObs$oevar
+  
+  # Estimate parameters using PSGP
   object = learnParameters(object)
 
+  # Restore original observations
   if (rotated) 
     object$observations = origObs
   object
