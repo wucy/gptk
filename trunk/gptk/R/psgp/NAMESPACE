@@ -1,8 +1,0 @@
-useDynLib(psgp)
-
-import(intamap)
-
-export(estimateParameters, spatialPredict, learnParameters, makePrediction, buildMetadata)
-
-S3method(estimateParameters, psgp)
-S3method(spatialPredict, psgp)
