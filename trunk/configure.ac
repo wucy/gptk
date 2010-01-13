@@ -1,8 +1,8 @@
 AC_PREREQ(2.61)
-AC_INIT(libgptk, 1.0)
+AC_INIT(libgptk, 0.2)
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_INIT_AUTOMAKE(libgptk,1.0)
+AM_INIT_AUTOMAKE(libgptk,0.2)
 AM_PROG_LIBTOOL
 
 
