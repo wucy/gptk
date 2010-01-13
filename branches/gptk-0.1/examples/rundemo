@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if [ ! $# -eq 1 ] 
+then
+    echo "Usage: run <demoname>"
+    echo "Example: run demGP1"
+    exit
+fi
+
+# Add Xerces C library to path
+export LD_LIBRARY_PATH=`pwd`/../libgptk:`pwd`/../lib/xercesc/lib/:$LD_LIBRARY_PATH
+
+# Run the demo
+./$1

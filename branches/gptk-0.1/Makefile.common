@@ -1,0 +1,20 @@
+# Common parameters to different modules of the project.
+# These are used by libgptk, examples and tests.
+#
+# Remi Barillec, 2009
+
+# Compiler
+CXX = g++
+
+# Compiler flags
+# -pg -fPIC
+CXXFLAGS =	`itpp-config --cflags` -O3 -g -Wall -fmessage-length=0  
+
+# $(ROOT) needs to be declared in Makefiles including the current file
+
+# Includes
+INCLUDES = -I/usr/include/ -I$(ROOT)/lib/xercesc/include -I$(ROOT)/libgptk
+
+# External libraries
+LIBS_COMMON = `itpp-config --libs` -lgsl -lxerces-c -lpthread -L$(ROOT)/lib/xercesc/lib
+
