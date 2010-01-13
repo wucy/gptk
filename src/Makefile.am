@@ -8,6 +8,29 @@ lib_LTLIBRARIES = libgptk.la
 # compiled in the sub-libraries)
 libgptk_la_SOURCES = 
 
+# The headers
+nobase_include_HEADERS = covariance_functions/CovarianceFunction.h \
+                         covariance_functions/StationaryCF.h \
+                         covariance_functions/GaussianCF.h \
+                         covariance_functions/WhiteNoiseCF.h \
+                         covariance_functions/SumCF.h \
+                         gaussian_processes/ForwardModel.h \
+                         gaussian_processes/GaussianProcess.h \
+                         gaussian_processes/PSGP.h \
+                         io/csvstream.h \
+                         itppext/itppext.h \
+                         likelihood_models/LikelihoodType.h \
+                         likelihood_models/GaussianLikelihood.h \
+                         likelihood_models/LikelihoodType.h \
+                         optimisation/ModelTrainer.h \
+                         optimisation/Optimisable.h \
+                         optimisation/SCGModelTrainer.h \
+                         parameter_transforms/Transform.h \
+                         parameter_transforms/LogTransform.h \
+                         parameter_transforms/IdentityTransform.h \
+                         plotting/GraphPlotter.h
+                         
+
 # The sub-libraries
 libgptk_la_LIBADD = gaussian_processes/libgp.la \
                     covariance_functions/libcovf.la \
