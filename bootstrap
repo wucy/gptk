@@ -1,0 +1,3 @@
+#! /bin/sh
+echo "Setting up configuration environment..."
+aclocal && libtoolize --force && automake --add-missing && autoconf
