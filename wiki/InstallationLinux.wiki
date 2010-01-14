@@ -58,19 +58,19 @@ On 64-bit systems, an alternative binary can be download from the [http://xerces
 {{{
 $ svn checkout https://gptk.googlecode.com/svn/trunk/ gptk --username <your_username>
 }}}
-   # Run the {{{bootstrap}}} script to generate the files needed by automake
+   # Run the {{{bootstrap}}} script to generate the files needed by automake:
 {{{
 $ cd gptk
 $ ./bootstrap
 }}}
-   # Run the configure script, using the {{{--prefix}}} option to specify the directory where you want the libraries and test programs to be installed
+   # Run the configure script, using the {{{--prefix}}} option to specify the directory where you want the libraries and test programs to be installed:
 {{{
 $ ./configure --prefix=$HOME/gptk/
 }}}
    You can safely ignore the warnings reporting missing configuration information in some folders.
-   # Compile the library, tests and examples:
+   # Compile and install the library, tests and examples:
 {{{
-$ make
+$ make && make install
 }}} 
    There will be some complaints about redefining several variables. This is because both GPTK and IT++ try to define their own package version, name, etc. This is not critical and can be ignored for now.
 
