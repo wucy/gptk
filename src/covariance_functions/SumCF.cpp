@@ -98,13 +98,13 @@ void SumCF::displayCovarianceParameters(int nspaces) const
  * @param p      the parameter number
  * @param X      a set of inputs
  */
-void SumCF::covariance_gradient(mat& D, const int p, const mat& X) const
+void SumCF::covarianceGradient(mat& D, const int p, const mat& X) const
 {
     int cfIndex;
     int parcfIndex;
 
     reindex(cfIndex, parcfIndex, p);
-    covFunctions[cfIndex]->covariance_gradient(D, parcfIndex, X);
+    covFunctions[cfIndex]->covarianceGradient(D, parcfIndex, X);
 }
 
 

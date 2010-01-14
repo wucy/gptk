@@ -83,7 +83,7 @@ void StationaryCF::covariance(mat& C, const mat& X) const
     sqDistMatrix(C, X);
 
     // Apply correlation function
-    apply_correlation(C);
+    applyCorrelation(C);
 
     // Finally, scale by process variance
     C *= variance;
@@ -99,7 +99,7 @@ void StationaryCF::covariance(mat& C, const mat& X) const
  * @param p      the parameter number
  * @param X      a set of inputs
  */
-void StationaryCF::covariance_gradient(mat& D, const int p, const mat& X) const
+void StationaryCF::covarianceGradient(mat& D, const int p, const mat& X) const
 {
     assert(p>=0 && p<numberParameters);
 
@@ -112,12 +112,12 @@ void StationaryCF::covariance_gradient(mat& D, const int p, const mat& X) const
     switch (p)
     {
     case 0:
-        apply_correlation_gradient(p, D);        // Compute gradient of correlation matrix
+        applyCorrelationGradient(p, D);        // Compute gradient of correlation matrix
         D *= variance;                           // Multiply by variance
         break;
 
     case 1:
-        apply_correlation(D);
+        applyCorrelation(D);
         break;
 
     }
@@ -133,7 +133,7 @@ void StationaryCF::covariance_gradient(mat& D, const int p, const mat& X) const
  * @param D A matrix of square distances. These get overriden with the
  *          correlation for each square distance.
  */
-void StationaryCF::apply_correlation(mat& D) const
+void StationaryCF::applyCorrelation(mat& D) const
 {
     for(int i=0; i<D.rows(); i++) {
         for (int j=0; j<D.cols(); j++) {
@@ -151,11 +151,11 @@ void StationaryCF::apply_correlation(mat& D) const
  * @param D A matrix of square distances. These get overriden with the
  *          gradient of the correlation for each square distance
  */
-void StationaryCF::apply_correlation_gradient(int p, mat& D) const
+void StationaryCF::applyCorrelationGradient(int p, mat& D) const
 {
     for(int i=0; i<D.rows(); i++) {
         for (int j=0; j<D.cols(); j++) {
-            D(i,j) = correlation_gradient(p, D(i,j));
+            D(i,j) = correlationGradient(p, D(i,j));
         }
     }
 }

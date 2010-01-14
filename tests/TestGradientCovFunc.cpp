@@ -152,7 +152,7 @@ bool TestGradientCovFunc::matGradCheck(CovarianceFunction *cf)
   printf("\n  Param   Mean       Var        Max       Parameter name\n");
   for (int i=0; i<params.size(); i++) 
   {
-    cf->covariance_gradient(gradK, i, X);
+    cf->covarianceGradient(gradK, i, X);
     gradKfd = gradFiniteDifferences(cf,X,i);
         
     // cout << "grad analytic = " << endl << gradK << endl;

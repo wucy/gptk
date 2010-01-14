@@ -67,7 +67,7 @@ public:
     virtual void covariance(vec& C, const mat& X, const vec& x) const;
     virtual void covariance(mat& C, const mat& X1, const mat& X2) const;
 
-    virtual void covariance_gradient(mat& grad, const int parameterNumber, const mat& X) const = 0;
+    virtual void covarianceGradient(mat& grad, const int parameterNumber, const mat& X) const = 0;
 
     virtual void computeDiagonal(mat& C, const mat& X) const;
     virtual void computeDiagonal(vec& C, const mat& X) const;

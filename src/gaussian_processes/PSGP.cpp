@@ -1139,7 +1139,7 @@ vec PSGP::gradientEvidenceApproximate() const
 
     for(int i = 0; i < covFunc.getNumberParameters(); i++)
     {
-        covFunc.covariance_gradient(partialDeriv, i, ActiveSet);
+        covFunc.covarianceGradient(partialDeriv, i, ActiveSet);
         grads(i) = elem_mult_sum(W, partialDeriv) / 2.0;
     }
     return grads; 
@@ -1166,7 +1166,7 @@ vec PSGP::gradientEvidenceUpperBound() const
 
     for(int i = 0; i < covFunc.getNumberParameters(); i++)
     {
-        covFunc.covariance_gradient(partialDeriv, i, ActiveSet);
+        covFunc.covarianceGradient(partialDeriv, i, ActiveSet);
         mat V1 = backslash(KB_new,partialDeriv);
         mat V2 = W*backslash(KB_new,partialDeriv*U);
 
