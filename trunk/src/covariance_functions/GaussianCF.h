@@ -17,7 +17,7 @@ public:
 
 protected:
     virtual double correlation(double sqDist) const;
-    virtual double correlation_gradient(int parameterNumber, double sqDist) const;
+    virtual double correlationGradient(int parameterNumber, double sqDist) const;
 };
 
 #endif /* GAUSSIANCF_H_ */

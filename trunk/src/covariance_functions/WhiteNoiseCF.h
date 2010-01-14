@@ -45,7 +45,7 @@ public:
 	inline double computeElement(const vec& A, const vec& B) const;
 	inline double computeDiagonalElement(const vec& A) const;
 	
-	void covariance_gradient(mat& G, const int p, const mat& X) const;
+	void covarianceGradient(mat& G, const int p, const mat& X) const;
 	
 private:
 	double& variance;

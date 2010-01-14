@@ -24,7 +24,7 @@ public:
     virtual ~StationaryCF();
 
     virtual void covariance(mat& C, const mat& X) const;
-    virtual void covariance_gradient(mat& grad, const int parameterNumber, const mat& X) const;
+    virtual void covarianceGradient(mat& grad, const int parameterNumber, const mat& X) const;
 
     static void sqDistMatrix(mat &D, const mat X);
     static double sqDist(vec u, vec v);
@@ -38,10 +38,10 @@ protected:
     double computeElement(double sqDist) const;
 
     virtual double correlation(double sqDist) const = 0;
-    virtual double correlation_gradient(int paramNumber, double sqDist) const = 0;
+    virtual double correlationGradient(int paramNumber, double sqDist) const = 0;
 
-    void apply_correlation(mat &sqDist) const;
-    void apply_correlation_gradient(int paramNumber, mat &sqDist) const;
+    void applyCorrelation(mat &sqDist) const;
+    void applyCorrelationGradient(int paramNumber, mat &sqDist) const;
 
 };
 

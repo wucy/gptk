@@ -54,7 +54,7 @@ inline double WhiteNoiseCF::computeDiagonalElement(const vec& A) const
  * @param p    the parameter number
  * @param X    a set of (row) inputs
  */
-void WhiteNoiseCF::covariance_gradient(mat& G, const int p, const mat& X) const
+void WhiteNoiseCF::covarianceGradient(mat& G, const int p, const mat& X) const
 {
 	assert(p == 0);
 

@@ -48,7 +48,7 @@ double GaussianCF::correlation(double sqDist) const
  * @param sqDist the squared distance between two inputs
  * @return       the gradient with respect to parameter
  */
-double GaussianCF::correlation_gradient(int p, double sqDist) const
+double GaussianCF::correlationGradient(int p, double sqDist) const
 {
     assert(p>=0 && p<numberParemeters);
 

@@ -154,7 +154,7 @@ vec GaussianProcess::gradient() const
 
 	for(int i = 0; i < covFunc.getNumberParameters(); i++)
 	{
-		covFunc.covariance_gradient(partialDeriv, i, Locations);
+		covFunc.covarianceGradient(partialDeriv, i, Locations);
 		//grads(i) = sum(sum(elem_mult(W, partialDeriv))) / 2;
 		grads(i) = elem_mult_sum(W, partialDeriv) / 2;
 // official - but slower		grads(i) = sum(diag(W * partialDeriv)) / 2;
