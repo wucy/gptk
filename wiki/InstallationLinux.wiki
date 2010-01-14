@@ -2,9 +2,6 @@
 
 =Installing `libgptk`=
 
-==Downloading the source code==
-Checkout the latest version of the source code from the repository (see "Source" tab for instructions). This will create the `gptk` folder containing the source code for `libgptk` and the installer for the required Xerces-c library.
- 
 ==Installing dependencies==
 
 Prior to compiling `libgptk`, we need to install several dependencies required by `libgptk`. These include IT++, GSL and Gnuplot. The instructions below should work on Ubuntu systems.
@@ -56,30 +53,25 @@ $ ln -s xerces-c-3.0.1-x86-linux-gcc-3.4 xercesc
 
 On 64-bit systems, an alternative binary can be download from the [http://xerces.apache.org/xerces-c/download.cgi Xerces website]. Save the appropriate file in the `gptk/lib` folder and resume at step 3 (replacing "`xerces-c-3.0.1-x86-linux-gcc-3.4`" with the name of the downloaded binary).
 
-==Compiling libgptk==
-To compile `libgptk`, simply run:
+==Building libgptk (developers)==
+   # Download the latest source: <br/>
+{{{
+$ svn checkout https://gptk.googlecode.com/svn/trunk/ gptk --username <your_username>
+}}}
+   # Run the {{{bootstrap}}} script to generate the files needed by automake
+{{{
+$ cd gptk
+$ ./bootstrap
+}}}
+   # Run the configure script, using the {{{--prefix}}} option to specify the directory where you want the libraries and test programs to be installed
+{{{
+$ ./configure --prefix=$HOME/gptk/
+}}}
+   You can safely ignore the warnings reporting missing configuration information in some folders.
+   # Compile the library, tests and examples:
 {{{
 $ make
-}}}
-in the `gptk` folder. This will build the library, the examples and the tests.
+}}} 
+   There will be some complaints about redefining several variables. This is because both GPTK and IT++ try to define their own package version, name, etc. This is not critical and can be ignored for now.
 
-==Running the demos==
-To run the demos in the `examples` directory, use the following command:
-{{{
-$ cd examples
-$ ./rundemo demGP1
-}}}
-
-where `demGP1` is the name of the demo. The `rundemo` script merely sets the library path before launching the demo. Alternatively, you can simply run the following command (from the `intamap` directory) and run the demos directly:
-
-{{{
-$ export LD_LIBRARY_PATH=../libgptk:../lib/xercesc/lib:$LD_LIBRARY_PATH
-$ ./demGP1
-}}}
-
-==Running the tests==
-Similarly, running the test is done by using the `runtest` script in the `tests folder:
-{{{
-$ cd tests
-$ ./runtest testCSVStream
-}}}
+If everything went fine, the installation should have created a {{{bin}}}, a {{{lib}}} and an {{{include}}} directories in your prefix directory. The {{{bin}}} directory contains the examples and tests, while the {{{lib}}} directory contains the actual libraries. C++ headers can be found in the {{{include}}} directory.
