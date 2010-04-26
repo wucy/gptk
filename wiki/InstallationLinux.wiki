@@ -53,7 +53,7 @@ $ ln -s xerces-c-3.0.1-x86-linux-gcc-3.4 xercesc
 
 On 64-bit systems, an alternative binary can be download from the [http://xerces.apache.org/xerces-c/download.cgi Xerces website]. Save the appropriate file in the `gptk/lib` folder and resume at step 3 (replacing "`xerces-c-3.0.1-x86-linux-gcc-3.4`" with the name of the downloaded binary).
 
-==Building libgptk (developers)==
+==Building libgptk==
    # Download the latest source: <br/>
 {{{
 $ svn checkout https://gptk.googlecode.com/svn/trunk/ gptk --username <your_username>
