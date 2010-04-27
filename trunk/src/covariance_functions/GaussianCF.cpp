@@ -50,7 +50,7 @@ double GaussianCF::correlation(double sqDist) const
  */
 double GaussianCF::correlationGradient(int p, double sqDist) const
 {
-    assert(p>=0 && p<numberParemeters);
+    assert(p>=0 && p<numberParameters);
 
     switch (p) {
     // Gradient with respect to length scale

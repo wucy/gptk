@@ -6,11 +6,11 @@ TestGradientCovFunc::TestGradientCovFunc()
   addTest(&testGradientGaussianCF, "Gradient of Gaussian covariance function");
   addTest(&testGradientWhiteNoiseCF, "Gradient of Gaussian White Noise covariance function");
 //  addTest(&testGradientConstantCF, "Gradient of Constant covariance functions");
-//  addTest(&testGradientMatern3CF, "Gradient of Matern 3/2 covariance function");
+  addTest(&testGradientMatern3CF, "Gradient of Matern 3/2 covariance function");
 //  addTest(&testGradientMatern5CF, "Gradient of Matern 5/2 covariance function");
-//  addTest(&testGradientSumCF, "Gradient of Sum of covariance functions");
+  addTest(&testGradientSumCF, "Gradient of Sum of covariance functions");
 //  addTest(&testGradientNeuralNetCF, "Gradient of neural network covariance function");
-  // addTest(&testGradientExponential2CF, "Gradient of anisotropic exponential covariance function");
+  addTest(&testGradientExponentialCF, "Gradient of isotropic exponential covariance function");
 }
 
 TestGradientCovFunc::~TestGradientCovFunc() {}
@@ -22,7 +22,7 @@ bool TestGradientCovFunc::testGradientGaussianCF()
 {
   double lengthScale = 2.1;
   double variance    = 3.3;
-  GaussianCF *cf = new GaussianCF(lengthScale, variance);
+  GaussianCF *cf = new GaussianCF(variance, lengthScale);
   return matGradCheck(cf);
 }
 
@@ -55,14 +55,13 @@ bool TestGradientCovFunc::testGradientSumCF() {
 	double lengthScale = 2.1;
 	double variance    = 3.3;
 	
-//	GaussianCF 		cf1(lengthScale, variance);
-//	WhiteNoiseCF 	cf2(variance);
-//
-//	SumCovarianceFunction *cf = new SumCovarianceFunction(cf1);
-//	cf->addCovarianceFunction(cf2);
-//
-//	return matGradCheck(cf);
-	return false;
+	GaussianCF 		cf1(variance, lengthScale);
+	WhiteNoiseCF 	cf2(variance);
+
+	SumCF *cf = new SumCF(cf1);
+	cf->add(cf2);
+
+	return matGradCheck(cf);
 }
 
 /**
@@ -72,10 +71,9 @@ bool TestGradientCovFunc::testGradientMatern3CF()
 {
     double lengthScale = 2.1;
     double variance = 3.7;
-//    Matern3CF *cf = new Matern3CF(lengthScale, variance);
-//
-//    return matGradCheck(cf);
-    return false;
+    Matern3CF *cf = new Matern3CF(variance, lengthScale);
+
+    return matGradCheck(cf);
 }
 
 
@@ -108,17 +106,13 @@ bool TestGradientCovFunc::testGradientNeuralNetCF()
 }
     
 
-bool TestGradientCovFunc::testGradientExponential2CF()
+bool TestGradientCovFunc::testGradientExponentialCF()
 {
-    double ls_x = sqrt(2.1);
-    double ls_y = sqrt(2.6);
-    double ls_xy = -0.23;
-    
+    double ls = 2.1;
     double variance = 3.7;
-//    Exponential2CF *cf = new Exponential2CF(ls_x, ls_y, ls_xy, variance);
+    ExponentialCF *cf = new ExponentialCF(variance, ls);
     
-//    return matGradCheck(cf);
-    return false;
+    return matGradCheck(cf);
 }
 
 

@@ -4,12 +4,16 @@
 #include "Test.h"
 #include "covariance_functions/GaussianCF.h"
 #include "covariance_functions/WhiteNoiseCF.h"
+#include "covariance_functions/ExponentialCF.h"
+#include "covariance_functions/Matern3CF.h"
+#include "covariance_functions/SumCF.h"
+
 /*
 #include "covarianceFunctions/ConstantCF.h"
-#include "covarianceFunctions/Matern3CF.h"
-#include "covarianceFunctions/Matern5CF.h"
+
+#include "covarianceFunctions/Matern5CF
 #include "covarianceFunctions/NeuralNetCF.h"
-#include "covarianceFunctions/Exponential2CF.h"
+
 #include "covarianceFunctions/SumCovarianceFunction.h"
 */
 #include <itpp/itbase.h>
@@ -62,7 +66,7 @@ public:
   /**
     * Test gradient of anisotropic exponential covariance function
     */
-   static bool testGradientExponential2CF();
+   static bool testGradientExponentialCF();
   
   /**
    * Computes the error between analytic gradient matrix and finite differences
