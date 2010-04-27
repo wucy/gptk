@@ -26,57 +26,26 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef SUMCOVARIANCEFUNCTION_H_
-#define SUMCOVARIANCEFUNCTION_H_
+#ifndef EXPONENTIALCF_H_
+#define EXPONENTIALCF_H_
 
 #include "CovarianceFunction.h"
-#include "parameter_transforms/Transform.h"
 
 #include <cmath>
-#include <vector>
 #include <cassert>
 #include <itpp/itbase.h>
+#include "StationaryCF.h"
 
-using namespace std;
 using namespace itpp;
 
-/**
- * Sum of covariance functions. This allows to build complex
- * covariance functions using a mixture of basic ones.
- */
-class SumCF : public CovarianceFunction
+class ExponentialCF : public StationaryCF
 {
 public:
-	SumCF();
-	SumCF(CovarianceFunction& cf);
-	~SumCF();
-
-	inline double computeElement(const vec& A, const vec& B) const;
-	inline double computeDiagonalElement(const vec& A) const;
+	ExponentialCF(double variance, double lengthScale);
+	virtual ~ExponentialCF();
 	
-	void covarianceGradient(mat& G, const int p, const mat& X) const;
-	
-
-	// We need to override all methods dealing with parameter indexes,
-	// as these will be different
-	void   setParameter(const int parameterNumber, const double value);
-	double getParameter(const int parameterNumber) const;
-	string getParameterName(const int parameterNumber) const;
-
-	void   setTransformedParameters(const vec p);
-	vec    getTransformedParameters();
-
-	void setTransform(int parameterNumber, Transform* newTransform);
-	Transform* getTransform(int parameterNumber) const;
-
-	void add(CovarianceFunction& cf);
-	void displayCovarianceParameters(int nspaces = 0) const;
-	
-private:
-	vector<CovarianceFunction *> covFunctions;
-	void reindex(int& cfIndex, int& parcfIndex, int parIndex) const;
+	virtual double correlation(double sqDist) const;
+	virtual double correlationGradient(int parameterNumber, double sqDist) const;
 };
 
-
-
-#endif /*SUMCOVARIANCEFUNCTION_H_*/
+#endif /*EXPONENTIALCF_H_*/

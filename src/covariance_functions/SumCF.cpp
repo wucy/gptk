@@ -9,6 +9,14 @@ SumCF::SumCF()
 	covFunctions.clear();
 }
 
+SumCF::SumCF(CovarianceFunction& cf)
+: CovarianceFunction("Sum Covariance", 0)
+{
+	covFunctions.clear();
+	add(cf);
+}
+
+
 
 /**
  * Destructor
