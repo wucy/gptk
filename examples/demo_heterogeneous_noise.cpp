@@ -31,8 +31,8 @@ int main(int argc, char* argv[])
     GraphPlotter gplot = GraphPlotter();
 
     // Generate some data from a GP
-    double range  = 20.0;               // The range or length scale of the GP
-    double sill   = 10.0;               // The sill or variance of the GP
+    double range  = 40.0;               // The range or length scale of the GP
+    double sill   = 40.0;               // The sill or variance of the GP
     double nugget = 0.02;               // The noise variance
 
     // Covariance function: Gaussian + Nugget
@@ -57,7 +57,10 @@ int main(int argc, char* argv[])
     Ytst = (chol(K)).transpose()*randn(n_points);   // Outputs
 
     // Training set - use a random subsample from the data
-    int n_train = 200;
+    int n1 = 40;   	// Points in likelihood region 1
+    int n2 = 40;	// Points in likelihood region 2
+    int n3 = 40;	// Points in likelihood region 3
+    int n_train = n1+n2+n3;
     ivec itrn = to_ivec( linspace(0,Xtst.length()-1,n_train) );
     Xtrn = Xtst(itrn);
     Ytrn = Ytst(itrn);
@@ -69,15 +72,16 @@ int main(int argc, char* argv[])
     double lambda = 0.7;
     double mu3 = 0.0;
     double sigma3 = 0.1;
-    vec noise1 = sqrt(sigma1)*randn(70);
-    vec noise2 = - log(randu(70))/lambda;
-    vec noise3 = sqrt(sigma3)*randn(60);  
 
-    Ytrn.set_subvector(0, 69, Ytrn(0,69) + noise1);
-    Ytrn.set_subvector(70, 139, Ytrn(70,139) + noise2); 
+    vec noise1 = sqrt(sigma1)*randn(n1);
+    vec noise2 = - log(randu(n2))/lambda;
+    vec noise3 = sqrt(sigma3)*randn(n3);
+
+    Ytrn.set_subvector(0, n1-1, Ytrn(0,n1-1) + noise1);
+    Ytrn.set_subvector(n1, n1+n2-1, Ytrn(n2,n1+n2-1) + noise2);
     
     // An observation operator is applied to the third segment: 1/sigma2 * y^4 + 2.0
-    Ytrn.set_subvector(140, 199, apply_function( &obsOperator, Ytrn(140, 199) ) + noise3);   
+    Ytrn.set_subvector(n1+n2, n1+n2+n3-1, apply_function( &obsOperator, Ytrn(n1+n2, n1+n2+n3-1) ) + noise3);
     
     mat Xtrnmat = Xtrn;
 
@@ -93,7 +97,7 @@ int main(int argc, char* argv[])
     PSGP psgp(Xtrnmat, Ytrn, psgpCovFunc, n_active, 1, 1);
     psgp.setLikelihoodType(UpperBound);
     
-    ivec multiLikIndex = to_ivec( concat( zeros(70), ones(70), 2*ones(60) ) );
+    ivec multiLikIndex = to_ivec( concat( zeros(n1), ones(n2), 2*ones(n3) ) );
     Vec<LikelihoodType*> multiLik(3);
     multiLik[0] = new GaussianLikelihood(sigma1);
     multiLik[1] = new ExponentialSampLikelihood(lambda);
@@ -111,7 +115,7 @@ int main(int argc, char* argv[])
     scg.setOptimisationMask(optMask);
     for(int i=0; i<3; i++)
     {
-        scg.Train(1);
+        scg.Train(5);
         psgpCovFunc.displayCovarianceParameters();
         psgp.resetPosterior();
         psgp.computePosterior(multiLikIndex, multiLik);
@@ -145,7 +149,7 @@ int main(int argc, char* argv[])
     scg2.setOptimisationMask(optMask);
     for(int i=0; i<3; i++)
     {
-        scg2.Train(1);
+        scg2.Train(5);
         gpCovFunc.displayCovarianceParameters();
     }
 
@@ -207,7 +211,7 @@ int main(int argc, char* argv[])
     csv.write(obs, "demo_noise_obs.csv");
     
     cout << "Done" << endl;
-    return;
+    return 0;
 
     //-------------------------------------------------------------------------
     // LIKELIHOOD PROFILES
