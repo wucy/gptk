@@ -41,7 +41,7 @@ using namespace itpp;
 class ExponentialCF : public StationaryCF
 {
 public:
-	ExponentialCF(double variance, double lengthScale);
+	ExponentialCF(double lengthScale, double variance);
 	virtual ~ExponentialCF();
 	
 	virtual double correlation(double sqDist) const;

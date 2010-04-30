@@ -9,8 +9,8 @@ using namespace itpp;
  * @param variance      the process variance
  * @param lengthScale   the correlation length scale
  */
-ExponentialCF::ExponentialCF(double variance, double lengthScale)
-: StationaryCF("Isotropic Exponential", variance, lengthScale)
+ExponentialCF::ExponentialCF(double lengthScale, double variance)
+: StationaryCF("Isotropic Exponential", lengthScale, variance)
 {
 }
 

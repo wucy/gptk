@@ -218,7 +218,7 @@ string CovarianceFunction::getParameterName(const int parameterNumber) const
 	{
 		cout << space << getParameterName(i) << " : ";
         cout << getParameter(i);
-        cout << " (" << transforms[i]->type() << endl;
+        cout << " (" << transforms[i]->type() << ")" << endl;
 	}
 }
 

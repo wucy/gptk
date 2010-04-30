@@ -72,8 +72,6 @@ public:
     virtual void computeDiagonal(mat& C, const mat& X) const;
     virtual void computeDiagonal(vec& C, const mat& X) const;
 
-
-
     virtual void setParameter(const int parameterNumber, const double value);
     virtual double getParameter(const int parameterNumber) const;
 
@@ -100,8 +98,8 @@ protected:
     int numberParameters;
     bool transformsApplied;
 
-    double *parameters;
-    vector<string> parametersNames;
+    double *parameters;                    // Array of parameters
+    vector<string> parametersNames;        // Array of parameter names
 
     Transform* defaultTransform;
     vector<Transform *> transforms;

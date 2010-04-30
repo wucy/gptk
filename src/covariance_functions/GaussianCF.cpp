@@ -14,8 +14,8 @@
  * @param _variance      the process variance
  * @param _lengthScale   the correlation length scale
  */
-GaussianCF::GaussianCF(double _variance, double _lengthScale)
-: StationaryCF("Isotropic Gaussian (squared exponential)", _variance, _lengthScale)
+GaussianCF::GaussianCF(double lengthScale, double variance)
+: StationaryCF("Isotropic Gaussian (squared exponential)", lengthScale, variance)
 {
 }
 

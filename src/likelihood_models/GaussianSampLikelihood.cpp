@@ -75,7 +75,7 @@ double GaussianSampLikelihood::updateCoefficients(double& K1, double& K2, double
 	
 	//	Sampling
 	K1 = (pM - ModelMean) / ModelVariance;
-	K2 = -(ModelVariance - pV) / pow(ModelVariance, 2.0);
+	K2 = (pV - ModelVariance) / pow(ModelVariance, 2.0);
 	
 	return log(ev);
 	

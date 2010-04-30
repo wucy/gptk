@@ -14,7 +14,7 @@
  * @param _lengthScale Correlation length scale
  * @param name         Identifier of the covariance function
  */
-StationaryCF::StationaryCF(string name, double _variance, double _lengthScale)
+StationaryCF::StationaryCF(string name, double _lengthScale, double _variance)
 : CovarianceFunction(name, 2), lengthScale(parameters[0]), variance(parameters[1])
 {
     // Set parameter values
