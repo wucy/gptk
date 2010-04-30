@@ -5,9 +5,9 @@ TestGradientCovFunc::TestGradientCovFunc()
   header = "Test set for gradient of covariance functions";
   addTest(&testGradientGaussianCF, "Gradient of Gaussian covariance function");
   addTest(&testGradientWhiteNoiseCF, "Gradient of Gaussian White Noise covariance function");
-//  addTest(&testGradientConstantCF, "Gradient of Constant covariance functions");
+  addTest(&testGradientConstantCF, "Gradient of Constant covariance functions");
   addTest(&testGradientMatern3CF, "Gradient of Matern 3/2 covariance function");
-//  addTest(&testGradientMatern5CF, "Gradient of Matern 5/2 covariance function");
+  addTest(&testGradientMatern5CF, "Gradient of Matern 5/2 covariance function");
   addTest(&testGradientSumCF, "Gradient of Sum of covariance functions");
 //  addTest(&testGradientNeuralNetCF, "Gradient of neural network covariance function");
   addTest(&testGradientExponentialCF, "Gradient of isotropic exponential covariance function");
@@ -31,10 +31,9 @@ bool TestGradientCovFunc::testGradientGaussianCF()
  */
 bool TestGradientCovFunc::testGradientConstantCF()
 {
-    double amplitude = 0.0123;
-//  ConstantCF *cf = new ConstantCF(amplitude);
-//  return matGradCheck(cf);
-    return false;
+  double amplitude = 0.0123;
+  ConstantCF *cf = new ConstantCF(amplitude);
+  return matGradCheck(cf);
 }
 
 
@@ -84,10 +83,9 @@ bool TestGradientCovFunc::testGradientMatern5CF()
 {
     double lengthScale = 2.1;
     double variance = 3.7;
-//    Matern5CF *cf = new Matern5CF(lengthScale, variance);
-//
-//    return matGradCheck(cf);
-    return false;
+    Matern5CF *cf = new Matern5CF(lengthScale, variance);
+
+    return matGradCheck(cf);
 }
 
 

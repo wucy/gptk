@@ -59,6 +59,7 @@ AC_SUBST(LIBS)
 
 AC_CONFIG_SUBDIRS([src/gaussian_processes 
                    src/covariance_functions
+                   src/design
                    src/parameter_transforms 
                    src/optimisation
                    src/likelihood_models 
@@ -72,6 +73,7 @@ AC_CONFIG_FILES([Makefile
                  src/Makefile 
                  src/gaussian_processes/Makefile 
                  src/covariance_functions/Makefile
+                 src/design/Makefile
                  src/parameter_transforms/Makefile 
                  src/optimisation/Makefile
                  src/likelihood_models/Makefile

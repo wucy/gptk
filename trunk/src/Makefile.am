@@ -5,17 +5,22 @@ GPTK_LIBRARY_VERSION=0:2:0
 lib_LTLIBRARIES = libgptk.la
 
 # The sources (none, as they are all in subdirectories and will be
-# compiled in the sub-libraries)
+# compiled as sub-libraries)
 libgptk_la_SOURCES = 
 
 # The headers
 nobase_include_HEADERS = covariance_functions/CovarianceFunction.h \
+                         covariance_functions/ConstantCF.h \
                          covariance_functions/StationaryCF.h \
                          covariance_functions/GaussianCF.h \
                          covariance_functions/ExponentialCF.h \
                          covariance_functions/Matern3CF.h \
                          covariance_functions/WhiteNoiseCF.h \
                          covariance_functions/SumCF.h \
+                         design/Design.h \
+                         design/MaxMinDesign.h \
+                         design/GreedyMaxMinDesign.h \
+                         design/MinMaxDesign.h \
                          gaussian_processes/ForwardModel.h \
                          gaussian_processes/GaussianProcess.h \
                          gaussian_processes/PSGP.h \
@@ -36,6 +41,7 @@ nobase_include_HEADERS = covariance_functions/CovarianceFunction.h \
 # The sub-libraries
 libgptk_la_LIBADD = gaussian_processes/libgp.la \
                     covariance_functions/libcovf.la \
+                    design/libdesign.la \
                     optimisation/liboptim.la \
                     likelihood_models/liblikmod.la \
                     parameter_transforms/libtransforms.la \
@@ -49,6 +55,7 @@ libgptk_la_LDFLAGS= -version-info $(GPTK_LIBRARY_VERSION) -release $(GPTK_RELEAS
 # Also run make in the following sub-directories 
 SUBDIRS = gaussian_processes \
           covariance_functions \
+          design \
           parameter_transforms \
           likelihood_models \
           optimisation \

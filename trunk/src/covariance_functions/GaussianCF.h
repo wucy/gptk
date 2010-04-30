@@ -12,7 +12,7 @@
 
 class GaussianCF: public StationaryCF {
 public:
-    GaussianCF(double variance, double lengthScale);
+    GaussianCF(double lengthScale, double variance);
     virtual ~GaussianCF();
 
 protected:

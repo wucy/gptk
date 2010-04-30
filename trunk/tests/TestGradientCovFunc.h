@@ -7,17 +7,11 @@
 #include "covariance_functions/ExponentialCF.h"
 #include "covariance_functions/Matern3CF.h"
 #include "covariance_functions/SumCF.h"
+#include "covariance_functions/ConstantCF.h"
+#include "covariance_functions/Matern5CF.h"
 
-/*
-#include "covarianceFunctions/ConstantCF.h"
+// #include "covarianceFunctions/NeuralNetCF.h"
 
-#include "covarianceFunctions/Matern5CF
-#include "covarianceFunctions/NeuralNetCF.h"
-
-#include "covarianceFunctions/SumCovarianceFunction.h"
-*/
-#include <itpp/itbase.h>
-#include <itpp/stat/misc_stat.h>
 
 using namespace std;
 using namespace itpp;

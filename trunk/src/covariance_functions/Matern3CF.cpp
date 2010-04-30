@@ -1,10 +1,10 @@
 #include "Matern3CF.h"
 
 /*
- * Constructor - pass in the length scale and variance
+ * Constructor
  */
-Matern3CF::Matern3CF(double variance, double lengthScale)
-: StationaryCF("Matern 3/2 covariance function", variance, lengthScale)
+Matern3CF::Matern3CF(double lengthScale, double variance)
+: StationaryCF("Matern 3/2 covariance function", lengthScale, variance)
 {
 }
 
@@ -32,7 +32,7 @@ double Matern3CF::correlation(double sqDist) const
 
 
 /**
- * Gradient of the MAtern 3/2 correlation function (isotropic) between two inputs,
+ * Gradient of the Matern 3/2 correlation function (isotropic) between two inputs,
  * with respect to a given parameter
  *
  * @param p      the number of the parameter
