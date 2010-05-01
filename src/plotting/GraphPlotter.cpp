@@ -16,7 +16,12 @@ GraphPlotter::GraphPlotter()
 
 GraphPlotter::~GraphPlotter()
 {
-	clearPlot();
+    // Wait a little before closing gnuplot stream.
+    // Quick programs can otherwise have the plot closed before it's actually
+    // displayed anything.
+    sleep(1);
+
+    clearPlot();
 	if (pclose(plotterStream) == -1)
 	{
 		cerr << "Problem closing communication to gnuplot" << endl;
@@ -75,6 +80,7 @@ void GraphPlotter::plotPoints(const vec &x, const vec &y, const string title, co
 
 	if(x.size() != y.size())
 	{
+	    cerr << "GraphPlotter::plotPoints : Vectors x and y must be of same length" << endl;
 		return;
 	}
 
@@ -85,7 +91,7 @@ void GraphPlotter::plotPoints(const vec &x, const vec &y, const string title, co
 	}
 
 	tmp.open(name);
-	if(tmp.bad())
+	if(tmp.fail() || tmp.bad() || !tmp.is_open())
 	{
 		cerr << "Cannot create temorary file: exiting plot" << endl;
 		return;
@@ -99,6 +105,11 @@ void GraphPlotter::plotPoints(const vec &x, const vec &y, const string title, co
 	}
 	tmp.flush();    
 	tmp.close();
+
+	if (tmp.fail()) {
+	    cerr << "Error closing gnuplot data file." << endl;
+	    return;
+	}
 
 	if(tempList.size() > 1)
 	{
@@ -124,6 +135,7 @@ void GraphPlotter::plotPoints(const vec &x, const vec &y, const string title, co
 	{
 		cmdstr << "points pt " << ps << " lt " << pc;
 	}
+	cerr << cmdstr.str().c_str() << endl;
 
 	sendCommand(cmdstr.str().c_str());
 }
