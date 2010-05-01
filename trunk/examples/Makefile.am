@@ -1,4 +1,8 @@
-bin_PROGRAMS = demo_active_set demo_heterogeneous_noise demo_large_dataset spatial_example
+bin_PROGRAMS = demo_sine \
+			   demo_active_set\
+			   demo_heterogeneous_noise \
+			   demo_large_dataset \
+			   spatial_example
 
 demo_active_set_SOURCES  = demo_active_set.cpp 
 demo_active_set_LDADD    = $(top_builddir)/src/libgptk.la
@@ -15,3 +19,7 @@ demo_large_dataset_CPPFLAGS = -I$(top_srcdir)/src
 spatial_example_SOURCES = SpatialExample.cpp
 spatial_example_LDADD = $(top_builddir)/src/libgptk.la
 spatial_example_CPPFLAGS = -I$(top_srcdir)/src
+
+demo_sine_SOURCES = demo_sine.cpp
+demo_sine_LDADD = $(top_builddir)/src/libgptk.la
+demo_sine_CPPFLAGS = -I$(top_srcdir)/src

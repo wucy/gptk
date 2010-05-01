@@ -10,6 +10,15 @@
 //////////////////////////////////////////////////////////////////////////////
 
 
+/**
+ * RB: Note that for the plotter to work as expected, it is necessary to pause
+ * the program before termination (e.g. using getchar()). The data to be plotted
+ * is stored in temporary files, which get deleted on program termination (when
+ * the GraphPlotter is destroyed). This can occur before the gnuplot thread
+ * displays the data, and can result in errors (if the data has been deleted before
+ * begin read by gnuplot).
+ **/
+
 #ifndef GRAPHPLOTTER_H_
 #define GRAPHPLOTTER_H_
 

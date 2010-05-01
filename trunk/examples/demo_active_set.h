@@ -23,4 +23,4 @@
 using namespace std;
 using namespace itpp;
 
-#endif /*MAIN_H_*/
+#endif

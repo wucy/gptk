@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+#include <itpp/itbase.h>
+
 #include "itppext/itppext.h"
 #include "io/csvstream.h"
 #include "optimisation/SCGModelTrainer.h"

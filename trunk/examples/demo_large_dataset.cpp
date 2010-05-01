@@ -9,6 +9,9 @@
 
 int main(void)
 {
+    // Set random generator seed
+    itpp::RNG_reset(123);
+
     int n_active = 400;
     time_t tstart = clock();
     run(n_active);
@@ -50,6 +53,9 @@ void run(int n_active)
     mat data_trn = datarand.get_rows(0, n_train-1);
     mat data_tst = datarand.get_rows(n_train, n_obs-1);
     
+    csv.write(data_tst, "Intamap_scenario1_germany_test.csv");
+    csv.write(data_trn, "Intamap_scenario1_germany_train.csv");
+
     int n_test  = data_tst.rows();
     mat Xtrn = data_trn.get_cols(0, 1);         // Training inputs
     vec Ytrn = data_trn.get_col(2);             // Training outputs
@@ -90,8 +96,10 @@ void run(int n_active)
             k++;
         }
     }
-    cout << "Making predictions on gridded data " << x1min << ":" << x1max << " x " << x2min << ":" << x2max << "(" << n_grid1 << "x" << n_grid2 << ")" << endl;
 
+    csv.write(Xgrid, "Intamap_scenario1_germany_grid.csv");
+    cout << "Making predictions on gridded data " << x1min << ":" << x1max << " x " << x2min << ":" << x2max << "(" << n_grid1 << "x" << n_grid2 << ")" << endl;
+    return;
     
     // We use a mixture of several kernels for more flexibility
     cout << "Initialising covariance function" << endl;
