@@ -60,7 +60,7 @@ public:
     virtual ~CovarianceFunction();
 
     virtual double computeElement(const vec& A, const vec& B) const = 0;
-    virtual double computeDiagonalElement(const vec& A) const = 0;
+    virtual double computeDiagonalElement(const vec& A) const;
 
     virtual void covariance(double& c, const vec& X) const;
     virtual void covariance(mat& C, const mat& X) const;

@@ -9,7 +9,7 @@ TestGradientCovFunc::TestGradientCovFunc()
   addTest(&testGradientMatern3CF, "Gradient of Matern 3/2 covariance function");
   addTest(&testGradientMatern5CF, "Gradient of Matern 5/2 covariance function");
   addTest(&testGradientSumCF, "Gradient of Sum of covariance functions");
-//  addTest(&testGradientNeuralNetCF, "Gradient of neural network covariance function");
+  addTest(&testGradientNeuralNetCF, "Gradient of neural network covariance function");
   addTest(&testGradientExponentialCF, "Gradient of isotropic exponential covariance function");
 }
 
@@ -97,13 +97,13 @@ bool TestGradientCovFunc::testGradientNeuralNetCF()
     double lengthScale = 2.1;
     double variance = 3.7;
     double offset = 1.2;
-//    NeuralNetCF *cf = new NeuralNetCF(lengthScale, variance, offset);
-//
-//    return matGradCheck(cf);
-    return false;
+    NeuralNetCF *cf = new NeuralNetCF(lengthScale, variance, offset);
+    return matGradCheck(cf);
 }
     
-
+/**
+ * Test gradient of exponential covariance function
+ */
 bool TestGradientCovFunc::testGradientExponentialCF()
 {
     double ls = 2.1;

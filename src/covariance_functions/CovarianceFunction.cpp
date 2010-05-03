@@ -153,6 +153,17 @@ void CovarianceFunction::covariance(mat& C, const mat& X1, const mat& X2) const
 
 
 /**
+ * Compute the variance of a diagonal element, i.e. cov(A,A)
+ * This is the default and returns computeElement(A,A). This should
+ * be overridden when possible with a more efficient implementation,
+ * specific to the type of covariance (for instance, for stationary
+ * covariance functions, this takes the value of the variance parameter).
+ */
+double CovarianceFunction::computeDiagonalElement(const vec& A) const {
+    return computeElement(A, A);
+}
+
+/**
  * Diagonal covariance matrix cov(X,X). The non-diagonal terms are ignored.
  *
  * @param C A diagonal matrix with with diagonal elements C_ii = cov(X_i, X_i)

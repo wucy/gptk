@@ -14,7 +14,6 @@ ConstantCF::ConstantCF(double _bias)
 
 ConstantCF::~ConstantCF()
 {
-
 }
 
 inline double ConstantCF::computeElement(const vec& A, const vec& B) const
