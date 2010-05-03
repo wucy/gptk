@@ -25,9 +25,10 @@ int main(int argc, char* argv[]) {
     vec Yobs = Y(Iobs) + sqrt(NOISE_VAR)*randn(NUM_OBS);   // Noisy observations
 
     // Covariance function: Gaussian + Nugget
-    double range = 0.5;
-    double sill = 1;
-    double nugget = NOISE_VAR;
+    double range = 0.5;           // Initial range
+    double sill = 1;              // Initial sill
+    double nugget = NOISE_VAR;    // Nugget variance
+
     GaussianCF   gaussianCovFunc(range, sill);
     WhiteNoiseCF nuggetCovFunc(nugget);
     SumCF covFunc;

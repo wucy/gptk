@@ -9,8 +9,7 @@
 #include "covariance_functions/SumCF.h"
 #include "covariance_functions/ConstantCF.h"
 #include "covariance_functions/Matern5CF.h"
-
-// #include "covarianceFunctions/NeuralNetCF.h"
+#include "covariance_functions/NeuralNetCF.h"
 
 
 using namespace std;

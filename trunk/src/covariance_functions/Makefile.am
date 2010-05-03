@@ -7,6 +7,7 @@ libcovf_la_SOURCES = CovarianceFunction.cpp \
                      ExponentialCF.cpp \
                      Matern3CF.cpp \
                      Matern5CF.cpp \
+                     NeuralNetCF.cpp \
                      SumCF.cpp
 libcovf_la_CPPFLAGS = -I$(top_srcdir)/src
 

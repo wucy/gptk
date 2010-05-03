@@ -15,6 +15,8 @@ nobase_include_HEADERS = covariance_functions/CovarianceFunction.h \
                          covariance_functions/GaussianCF.h \
                          covariance_functions/ExponentialCF.h \
                          covariance_functions/Matern3CF.h \
+                         covariance_functions/Matern5CF.h \
+                         covariance_functions/NeuralNetCF.h \
                          covariance_functions/WhiteNoiseCF.h \
                          covariance_functions/SumCF.h \
                          design/Design.h \

@@ -5,8 +5,6 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE(libgptk,0.2)
 AM_PROG_LIBTOOL
 
-
-
 # Custom itpp-config location
 ITPP_CONFIG=""
 itpp_config_path=""
