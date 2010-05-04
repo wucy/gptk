@@ -17,7 +17,7 @@
 class NeuralNetCF : public CovarianceFunction
 {
 public:
-	NeuralNetCF(double lengthscale, double variance, double offset);
+	NeuralNetCF(double lengthscale, double variance, double offset=0);
 	virtual ~NeuralNetCF();
 
 	inline double computeElement(const vec& A, const vec& B) const;
@@ -25,9 +25,9 @@ public:
 	virtual void covarianceGradient(mat& grad, const int parameterNumber, const mat& X) const;
 
 private:
-    double &lengthScale;                // Length scale parameter
-    double &offset;                     // Length scale of the offset
-    double &variance;                   // Variance parameter
+    double &sigma2;                		// Controls the scaling on the x axis
+    double &offset;                     // Controls the offset to the origin
+    double &variance;                   // Controls the process variance
 };
 
 #endif /*NEURALNETCF_H_*/

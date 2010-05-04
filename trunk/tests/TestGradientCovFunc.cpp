@@ -94,9 +94,9 @@ bool TestGradientCovFunc::testGradientMatern5CF()
  */
 bool TestGradientCovFunc::testGradientNeuralNetCF()
 {
-    double lengthScale = 2.1;
+    double lengthScale = 1.1;
     double variance = 3.7;
-    double offset = 1.2;
+    double offset = 0.1;
     NeuralNetCF *cf = new NeuralNetCF(lengthScale, variance, offset);
     return matGradCheck(cf);
 }
