@@ -19,7 +19,7 @@
 #include "covariance_functions/ExponentialCF.h"
 #include "covariance_functions/Matern3CF.h"
 #include "covariance_functions/Matern5CF.h"
-// #include "covariance_functions/NeuralNetCF.h"
+#include "covariance_functions/NeuralNetCF.h"
 #include "covariance_functions/ConstantCF.h"
 #include "covariance_functions/WhiteNoiseCF.h"
 

@@ -4,20 +4,20 @@
  * Constructor - pass in the length scale, variance and offset
  */
 NeuralNetCF::NeuralNetCF(double ls, double var, double offst)
-: CovarianceFunction("Neural network covariance function", 3), lengthScale(parameters[0]),
+: CovarianceFunction("Neural network covariance function", 3), sigma2(parameters[0]),
 variance(parameters[1]), offset(parameters[2])
 {
     // Make sure parameters are positive 
     assert( ls > 0.0 && var > 0.0 && offset > 0.0);  
     
-    lengthScale = ls;   // Length scale
+    sigma2 = ls;   // Length scale
     variance = var;
     offset = offst;
     
     // Parameter names
-    parametersNames[0] = "length scale";
+    parametersNames[0] = "sigma2";
     parametersNames[1] = "variance";
-    parametersNames[2] = "offset length scale";
+    parametersNames[2] = "offset";
 }
 
 
@@ -33,14 +33,19 @@ NeuralNetCF::~NeuralNetCF()
  */
 inline double NeuralNetCF::computeElement(const vec& A, const vec& B) const
 {
-    vec Ahat = A/lengthScale;
-    vec Bhat = B/lengthScale;
-        
-    double gamma = 1.0 / sqr(offset);
+    // vec Ahat = A*sqrt(sigma2);
+    // vec Bhat = B*sqrt(sigma2);
     
-    return variance * asin( (gamma+dot(Ahat,Bhat)) / 
-                            sqrt( (1.0+gamma+dot(Ahat,Ahat)) * (1.0+gamma+dot(Bhat,Bhat)) )
-                          );
+    // return variance * asin( 2*(offset+dot(Ahat,Bhat)) /
+    //                        sqrt( (1.0+offset+dot(Ahat,Ahat)) * (1.0+offset+dot(Bhat,Bhat)) )
+    //                      );}
+    
+    double u = offset+dot(A,B)*sigma2;
+    double vA = 1.0+offset+dot(A,A)*sigma2;
+    double vB = 1.0+offset+dot(B,B)*sigma2;
+    double v = sqrt(vA*vB);
+    
+    return variance * asin( u / v) * 2/M_PI;
 }
 
 /** 
@@ -56,69 +61,77 @@ void NeuralNetCF::covarianceGradient(mat& grad, const int parameterNumber, const
 
     switch(parameterNumber)
     {
-        case 0 :
+        // Derivative with respect to sigma2
+		case 0 :
         {
-            double gamma = 1.0 / sqr(offset);
-            mat Xhat = X / lengthScale;
-            
             vec Xi, Xj;
-            for (int i=0; i<Xhat.rows(); i++)
+            
+            for (int i=0; i<X.rows(); i++)
             {
-                Xi = Xhat.get_row(i);
-                double vi = 1.0 + gamma + dot(Xi, Xi);
+                Xi = X.get_row(i);
                 
-                for (int j=0; j<i; j++) 
+                double vA = 1 + offset + dot(Xi, Xi) * sigma2;
+                double dvA = dot(Xi, Xi);
+                
+                for (int j=0; j<=i; j++) 
                 {
-                    Xj = Xhat.get_row(j);
+                    Xj = X.get_row(j);
                     
-                    double u  = gamma + dot(Xi,Xj);
-                    double vj = 1.0 + gamma + dot(Xj, Xj);
-                    // double vij = vi*vj;
-                    // PD(i,j) = u * (vi+vj) / (vij * sqrt(vij - u*u) );
+                    double u = offset+dot(Xi,Xj)*sigma2;
+                    double vB = 1 + offset + dot(Xj, Xj) * sigma2;
+                    double v = sqrt(vA*vB);
                     
-                    double vij = sqrt(vi*vj);
-                    grad(i,j) = (2*gamma*vij - (gamma+1)*u*(vi+vj)/vij) / (vij*sqrt(vij*vij-u*u));
+                    double du = dot(Xi,Xj);
+                    double dvB = dot(Xj, Xj);
+                    double dv = 0.5 * (dvA*vB + vA*dvB) / v;
+                    
+                    grad(i,j) = (du*v - u*dv) / (v*sqrt(v*v - u*u));
                     grad(j,i) = grad(i,j);
                 }
-                // PD(i,i) = 2.0*(vi-1.0) / (vi*sqrt(2*vi-1.0));
-                grad(i,i) = 2.0*(gamma+1.0-vi) / (vi*sqrt(2*vi-1.0));
             }
-            grad *= variance * gradientModifier / lengthScale;
+            grad *= variance * 2/M_PI;
+
             break;
         }
 
+        // Derivative with respect to variance
         case 1 :
         {
             covariance(grad, X);
-            grad *= (gradientModifier / variance);
+            grad /= variance;
             break;
         }
 
+        // Derivative with respect to offset
         case 2:
-            double gamma = 1.0 / sqr(offset);
-            mat Xhat = X / lengthScale;
+        	vec Xi, Xj;
 
-            vec Xi, Xj;
-            for (int i=0; i<Xhat.rows(); i++) 
-            {
-                Xi = Xhat.get_row(i);
-                double vi = 1.0 + gamma + dot(Xi, Xi);
+        	for (int i=0; i<X.rows(); i++)
+        	{
+        		Xi = X.get_row(i);
 
-                for (int j=0; j<i; j++) 
-                {
-                    Xj = Xhat.get_row(j);
+        		double vA = 1 + offset + dot(Xi, Xi) * sigma2;
 
-                    double u  = gamma + dot(Xi,Xj);
-                    double vj = 1.0 + gamma + dot(Xj, Xj);
-                    double vij = vi*vj;
+        		for (int j=0; j<=i; j++) 
+        		{
+        			Xj = X.get_row(j);
 
-                    grad(i,j) = (1.0 - 0.5*u*(vi+vj)/vij) / sqrt(vij-u*u);
-                    grad(j,i) = grad(i,j);
-                }
-                grad(i,i) = 1.0 / ( vi * sqrt(2*vi-1.0) );
-            }
-            grad *= - 2.0 * variance * gradientModifier / pow(offset,3.0);
-            break;
+        			double u = offset+dot(Xi,Xj)*sigma2;
+        			double vB = 1 + offset + dot(Xj, Xj) * sigma2;
+        			double v = sqrt(vA*vB);
+
+        			double dv = 0.5 * (vB + vA) / v;
+
+        			grad(i,j) = (v - u*dv) / (v*sqrt(v*v - u*u));
+        			grad(j,i) = grad(i,j);
+        		}
+        	}
+        	grad *= variance * 2/M_PI;
+
+        	break;
     }
+    
+    
+    grad *= gradientModifier;
 
 }

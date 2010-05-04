@@ -21,7 +21,7 @@ int main(void)
 }    
 
 /**
- * Run the Scenario 6 interpolation exercice with n_active active points
+ * Run the Scenario 1 interpolation exercise with n_active active points
  */
 void run(int n_active)
 {
@@ -75,10 +75,12 @@ void run(int n_active)
         
     double r1 = abs( x1max - x1min );
     double r2 = abs( x2max - x2min );
-    double range  = 0.25 * ((r1+r2) / 2.0);
+    // double range  = 0.25 * ((r1+r2) / 2.0);
+    double range = 0.5*variance(data.get_col(0)) + 0.5*variance(data.get_col(0));
     double sill   = abs(variance(Ytrn));    
-    double nugget = 0.01*sill;
-    
+    double nugget = 0.1*sill;
+    double offset = min(x1min, x2min); 
+    		
     // Uniform grid for prediction
     int grid_size = 200;
     double dr = min(r1, r2)/grid_size;
@@ -99,20 +101,19 @@ void run(int n_active)
 
     csv.write(Xgrid, "Intamap_scenario1_germany_grid.csv");
     cout << "Making predictions on gridded data " << x1min << ":" << x1max << " x " << x2min << ":" << x2max << "(" << n_grid1 << "x" << n_grid2 << ")" << endl;
-    return;
+    
     
     // We use a mixture of several kernels for more flexibility
     cout << "Initialising covariance function" << endl;
-    // GaussianCF  kernel1(range, sill);
-    // Matern3CF   kernel2(range, sill);
+    GaussianCF  kernel1(range, sill);
+    Matern3CF   kernel2(range, sill);
     Matern5CF   kernel3(range, sill);
-    //  NeuralNetCF kernel4(range, sill);
-    // ExponentialCF kernel5(range, sill);
-    cout << "Estimated bias = " << mean(Ytrn) << endl;
+    NeuralNetCF kernel4(0.1*range, sill, offset);
+    ExponentialCF kernel5(range, sill);
     ConstantCF  bias(mean(Ytrn));
     
-    SumCF kernelCovFunc(kernel3);           // Put together the sum of various kernels
-    // kernelCovFunc.addCovarianceFunction(kernel2);
+    SumCF kernelCovFunc(kernel5);           // Put together the sum of various kernels
+    kernelCovFunc.add(kernel4);
     // kernelCovFunc.addCovarianceFunction(kernel3);
     // kernelCovFunc.addCovarianceFunction(kernel4);
     // kernelCovFunc.add(kernel5);
@@ -147,14 +148,15 @@ void run(int n_active)
     
     int nparams = covFunc.getParameters().length();
     bvec optMask(nparams);
-    for (int i=0; i<nparams; i++) optMask(i) = true; 
-    optMask(nparams-1) = true;
-    scg.setOptimisationMask(optMask);
+    // for (int i=0; i<nparams; i++) optMask(i) = true; 
+    // optMask(nparams-1) = true;
+    // scg.setOptimisationMask(optMask);
     scg.checkGradient();
     psgp_learn.setLikelihoodType(Approximate);
-    for (int i=0; i<5; i++)
+    for (int i=0; i<3; i++)
     {
         scg.Train(10);
+        scg.checkGradient();
         psgp_learn.recomputePosterior();
     }
         
@@ -182,7 +184,7 @@ void run(int n_active)
     vec gridvar  = zeros(n_grid1*n_grid2);
     
     cout << "Making predictions on gridded data " << x1min << ":" << x1max << " x " << x2min << ":" << x2max << "(" << n_grid1 << "x" << n_grid2 << ")" << endl;
-    psgp.makePredictions(gridmean, gridvar, Xgrid, kernelCovFunc);
+    psgp.makePredictions(gridmean, gridvar, Xgrid, covFunc);
     
     
     //---------------------------------------------------------------------
